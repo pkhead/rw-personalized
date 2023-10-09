@@ -3,14 +3,6 @@ var configuration = Argument("configuration", "Debug");
 var rainWorldDir = EnvironmentVariable<string>("RainWorldDir", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rain World");
 
 // Tasks
-
-Task("Clean")
-//  .WithCriteria(c => HasArgument("rebuild"))
-    .Does(() =>
-{
-    // CleanDirectory($"./plugin/gaming/bin/{configuration}");
-});
-
 Task("Build")
     .Does(() =>
 {
