@@ -77,6 +77,7 @@ namespace RWMod {
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             On.Player.NewRoom += Player_NewRoom;
             On.Room.Update += Room_Update;
+            On.RoomCamera.Update += RoomCamera_Update;
         }
 
         private void Cleanup()
@@ -97,6 +98,7 @@ namespace RWMod {
             orig(self, game);
             spawnTicker = -1;
             previousRoom = null;
+            darknessMultiplier = 1f;
             Cleanup();
         }
     }

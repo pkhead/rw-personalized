@@ -1,5 +1,4 @@
 using BepInEx;
-using DevInterface;
 using UnityEngine;
 
 namespace RWMod
@@ -9,6 +8,7 @@ namespace RWMod
         private bool oldPressState = false;
         private int spawnTicker = -1;
         private AbstractRoom previousRoom = null;
+        private float darknessMultiplier = 1f;
 
         private void Player_NewRoom(On.Player.orig_NewRoom orig, Player self, Room newRoom)
         {
@@ -19,7 +19,7 @@ namespace RWMod
                 if (newRoom.abstractRoom != previousRoom)
                 {
                     previousRoom = newRoom.abstractRoom;
-                    
+
                     Debug.Log("New Room");
 
                     foreach (AbstractWorldEntity ghost in ghosts)
@@ -148,11 +148,21 @@ namespace RWMod
             }
         }
 
+        // darken screen based off distance from "It" to target player
+        // the amount to darken screen by is determined in Player_Update
+        private void RoomCamera_Update(On.RoomCamera.orig_Update orig, RoomCamera self)
+        {
+            orig(self);
+            self.effect_darkness = 1f - (1f - self.effect_darkness) * darknessMultiplier;
+        }
+
         private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             if (IsCreatureShiny(self.abstractCreature))
             {
-                ChunkSoundEmitter emitter = self.room.PlaySound(SoundID.Death_Rain_LOOP, self.mainBodyChunk);
+                darknessMultiplier = 1f;
+                self.room.PlaySound(SoundID.Death_Rain_LOOP, self.mainBodyChunk);
+                bool isRoomViewed = self.abstractCreature.world.game.cameras[0].room == self.room;
 
                 // get nearest player
                 Vector2? targetPos = null;
@@ -186,15 +196,20 @@ namespace RWMod
                     self.bodyChunks[1].pos = self.bodyChunks[0].pos + self.bodyChunkConnections[0].distance * Vector2.down;
 
                     // if i touch player, freeze the application :trolle:
-                    if ((targetPos.Value - selfPos).magnitude < 30f && !self.abstractCreature.world.game.devToolsActive)
+                    float dist = (targetPos.Value - selfPos).magnitude;
+                    if (dist < 30f && !self.abstractCreature.world.game.devToolsActive)
                     {
                         targetPlayer.Die();
 
                         // only if this room is being viewed
-                        if (self.abstractCreature.world.game.cameras[0].room == self.room)
-                        {
+                        if (isRoomViewed)
                             while (true) {}
-                        }
+                    }
+
+                    // make screen darker the closer it is to the player
+                    if (isRoomViewed)
+                    {
+                        darknessMultiplier = Mathf.Clamp01((dist - 90) / (600 - 90));
                     }
                 }
             }
