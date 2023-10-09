@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <!-- <ImplicitUsings>enable</ImplicitUsings> -->
+    <!-- <Nullable>enable</Nullable> -->
+  </PropertyGroup>
+
+  <!--
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\bepinex\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>..\bepinex\BepInEx.dll</HintPath>
+    </Reference>
+    <Reference Include="HOOKS-Assembly-CSharp">
+      <HintPath>..\bepinex\HOOKS-Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\bepinex\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\bepinex\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+-->
+
+  <ItemGroup>
+    <Reference Include="$(RainWorldDir)/BepInEx/core/BepInEx.dll" />
+    <Reference Include="$(RainWorldDir)/BepInEx/plugins/HOOKS-Assembly-CSharp.dll" />
+    <Reference Include="$(RainWorldDir)/BepInEx/utils/PUBLIC-Assembly-CSharp.dll" />
+    <Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.CoreModule.dll" />
+    <Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.dll" />
+    <Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.InputModule.dll" />
+    <Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.InputLegacyModule.dll" />
+  </ItemGroup>
+</Project>
