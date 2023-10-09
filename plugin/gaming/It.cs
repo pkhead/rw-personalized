@@ -41,7 +41,7 @@ namespace RWMod
                         {
                             Debug.Log("Success!");
                             spawnTicker = 200;
-                            newRoom.PlaySound(SoundID.Bomb_Explode, self.mainBodyChunk);
+                            newRoom.PlaySound(SoundID.SS_AI_Give_The_Mark_Boom, self.mainBodyChunk);
                         }
                     }
                 }
