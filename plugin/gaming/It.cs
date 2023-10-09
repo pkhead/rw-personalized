@@ -8,6 +8,7 @@ namespace RWMod
     {
         private bool oldPressState = false;
         private int spawnTicker = -1;
+        private AbstractRoom previousRoom = null;
 
         private void Player_NewRoom(On.Player.orig_NewRoom orig, Player self, Room newRoom)
         {
@@ -15,23 +16,33 @@ namespace RWMod
 
             if (self.abstractCreature == self.room.game.cameras[0].followAbstractCreature)
             {
-                Debug.Log("New Room");
-
-                foreach (AbstractWorldEntity ghost in ghosts)
+                if (newRoom.abstractRoom != previousRoom)
                 {
-                    ghost.Room.realizedRoom.RemoveObject((ghost as AbstractCreature).realizedCreature);
-                    ghost.Room.RemoveEntity(ghost);
-                }
+                    previousRoom = newRoom.abstractRoom;
+                    
+                    Debug.Log("New Room");
 
-                ghosts.Clear();
-
-                // start spawn timer if this room isn't a shelter
-                if (!newRoom.abstractRoom.shelter)
-                {
-                    if (Random.value < Options.SpawnChance.Value / 100f)
+                    foreach (AbstractWorldEntity ghost in ghosts)
                     {
-                        Debug.Log("Begin Spawn IT");
-                        spawnTicker = 200;
+                        ghost.Room.realizedRoom.RemoveObject((ghost as AbstractCreature).realizedCreature);
+                        ghost.Room.RemoveEntity(ghost);
+                    }
+
+                    ghosts.Clear();
+
+                    // start spawn timer if this room isn't a shelter
+                    if (!newRoom.abstractRoom.shelter)
+                    {
+                        float diceRoll = Random.value;
+                        
+                        Debug.Log($"IT Spawn: {(int)(diceRoll * 100f)} < {Options.SpawnChance.Value}");
+
+                        if (diceRoll < Options.SpawnChance.Value / 100f)
+                        {
+                            Debug.Log("Success!");
+                            spawnTicker = 200;
+                            newRoom.PlaySound(SoundID.Bomb_Explode, self.mainBodyChunk);
+                        }
                     }
                 }
             }
@@ -101,7 +112,7 @@ namespace RWMod
 
         private string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite orig, PlayerGraphics self, float eyeScale)
         {
-            if (isShiny.TryGetValue(self.player.abstractCreature.ID, out bool creatureIsShiny) && creatureIsShiny)
+            if (IsCreatureShiny(self.player.abstractCreature))
             {
                 return "FaceE";
             }
@@ -134,17 +145,6 @@ namespace RWMod
                 }
 
                 sLeaser.sprites[9].color = new Color(1f, 0f, 0f);
-            }
-        }
-
-        // "It" always emits a sound
-        private void AbstractCreature_Realize(On.AbstractCreature.orig_Realize orig, AbstractCreature self)
-        {
-            orig(self);
-
-            if (self.realizedCreature.Template.type == MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC && IsCreatureShiny(self))
-            {
-                Debug.Log("begin sound pls...");
             }
         }
 
@@ -185,15 +185,15 @@ namespace RWMod
                     self.bodyChunks[0].pos += delta;
                     self.bodyChunks[1].pos = self.bodyChunks[0].pos + self.bodyChunkConnections[0].distance * Vector2.down;
 
-                    // if i touch player, force quit the application :trolle:
+                    // if i touch player, freeze the application :trolle:
                     if ((targetPos.Value - selfPos).magnitude < 30f && !self.abstractCreature.world.game.devToolsActive)
                     {
                         targetPlayer.Die();
 
-                        // if this room is being viewed, actually just quit to menu
+                        // only if this room is being viewed
                         if (self.abstractCreature.world.game.cameras[0].room == self.room)
                         {
-                            self.abstractCreature.world.game.ExitToMenu();
+                            while (true) {}
                         }
                     }
                 }

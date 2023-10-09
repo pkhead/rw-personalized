@@ -76,8 +76,7 @@ namespace RWMod {
             On.PlayerGraphics.DefaultFaceSprite += PlayerGraphics_DefaultFaceSprite;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             On.Player.NewRoom += Player_NewRoom;
-            On.Room.Update += Room_Update; 
-            On.AbstractCreature.Realize += AbstractCreature_Realize;
+            On.Room.Update += Room_Update;
         }
 
         private void Cleanup()
@@ -97,6 +96,7 @@ namespace RWMod {
         {
             orig(self, game);
             spawnTicker = -1;
+            previousRoom = null;
             Cleanup();
         }
     }
