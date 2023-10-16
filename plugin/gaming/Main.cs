@@ -78,6 +78,7 @@ namespace RWMod {
             On.Player.NewRoom += Player_NewRoom;
             On.Room.Update += Room_Update;
             On.RoomCamera.Update += RoomCamera_Update;
+            On.Player.ShortCutColor += Player_ShortCutColor;
         }
 
         private void Cleanup()

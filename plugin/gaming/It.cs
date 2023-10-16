@@ -22,9 +22,13 @@ namespace RWMod
 
                     Debug.Log("New Room");
 
-                    foreach (AbstractWorldEntity ghost in ghosts)
+                    foreach (AbstractCreature ghost in ghosts)
                     {
-                        ghost.Room.realizedRoom.RemoveObject((ghost as AbstractCreature).realizedCreature);
+                        if (ghost.realizedCreature != null)
+                        {
+                            ghost.Room.realizedRoom.RemoveObject(ghost.realizedCreature);
+                        }
+
                         ghost.Room.RemoveEntity(ghost);
                     }
 
@@ -57,11 +61,9 @@ namespace RWMod
 
             var playerState = realRoom.game.session.Players[0].state as PlayerState;
             var entityID = realRoom.game.GetNewID();
-
-            Debug.Log("player pos: " + playerState.creature.pos.abstractNode);
-
+            
             WorldCoordinate coords;
-            int exitRoom = -1;
+            int exitRoom;
             int exitIndex;
 
             exitIndex = Random.Range(0, room.connections.Length);
@@ -72,8 +74,6 @@ namespace RWMod
             var newCreature = new AbstractCreature(realRoom.world, template, null, coords, entityID);
             newCreature.state = new MoreSlugcats.PlayerNPCState(newCreature, 0);
             ghosts.Add(newCreature);
-
-            isShiny[newCreature.ID] = true;
 
             WorldCoordinate leading = realRoom.world.NodeInALeadingToB(exitRoom, room.index);
 
@@ -112,7 +112,7 @@ namespace RWMod
 
         private string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite orig, PlayerGraphics self, float eyeScale)
         {
-            if (IsCreatureShiny(self.player.abstractCreature))
+            if (ghosts.Contains(self.player.abstractCreature))
             {
                 return "FaceE";
             }
@@ -131,7 +131,7 @@ namespace RWMod
         {
             orig(self, sLeaser, rCam, timeStacker, camPos);
 
-            if (IsCreatureShiny(self.player.abstractCreature))
+            if (ghosts.Contains(self.player.abstractCreature))
             {
                 Color color = new Color(0.01f, 0.01f, 0.01f);
 
@@ -156,9 +156,21 @@ namespace RWMod
             self.effect_darkness = 1f - (1f - self.effect_darkness) * darknessMultiplier;
         }
 
+        private Color Player_ShortCutColor(On.Player.orig_ShortCutColor orig, Player self)
+        {
+            if (ghosts.Contains(self.abstractCreature))
+            {
+                return new Color(1f, 0f, 0f);
+            }
+            else
+            {
+                return orig(self);
+            }
+        }
+
         private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
-            if (IsCreatureShiny(self.abstractCreature))
+            if (ghosts.Contains(self.abstractCreature))
             {
                 darknessMultiplier = 1f;
                 self.room.PlaySound(SoundID.Death_Rain_LOOP, self.mainBodyChunk);
@@ -176,6 +188,11 @@ namespace RWMod
                     {
                         Player player = abstractCreature.realizedCreature as Player;
                         if (player.room.abstractRoom != self.room.abstractRoom || player.dead) continue;
+                
+                        // rendering freezes whenever a player is going through a pipe,
+                        // i don't know what causes this so i just put this check out
+                        // of desperation (doesn't seem to change anything)
+                        if (player.bodyChunks[0] == null || self.bodyChunkConnections[0] == null) continue;
 
                         Vector2 pos = player.bodyChunks[0].pos;
 
