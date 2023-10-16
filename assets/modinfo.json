@@ -7,5 +7,5 @@
     "description": "This mod does something interesting, probably!",
     "requirements": ["moreslugcats"],
     "requirements_names": ["More Slugcats Expansion"],
-    "checksum_override_version": true
+    "checksum_override_version": false
 }

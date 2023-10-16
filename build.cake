@@ -13,8 +13,7 @@ Task("Build")
 
     DotNetBuild("./plugin/gaming.sln", new DotNetBuildSettings
     {
-        Configuration = configuration,
-        NoRestore = true
+        Configuration = configuration
     });
 
     // create output folder
