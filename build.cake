@@ -28,7 +28,7 @@ Task("Install")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    var modOutputDir = rainWorldDir + "/RainWorld_Data/StreamingAssets/mods/pkhead.gaming";
+    var modOutputDir = rainWorldDir + "/RainWorld_Data/StreamingAssets/mods/pkhead.personalizer";
 
     EnsureDirectoryExists(modOutputDir);
     CleanDirectory(modOutputDir);
