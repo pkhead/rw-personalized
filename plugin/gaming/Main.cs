@@ -8,10 +8,10 @@ using BepInEx;
 [assembly: SecurityPermission( SecurityAction.RequestMinimum, SkipVerification = true )]
 
 namespace RWMod {
-    [BepInPlugin(MOD_ID, "Gaming", VERSION)]
+    [BepInPlugin(MOD_ID, "Personalizer", VERSION)]
     public partial class RWMod : BaseUnityPlugin
     {
-        public const string MOD_ID = "pkhead.gaming";
+        public const string MOD_ID = "pkhead.personalizer";
         public const string AUTHOR = "pkhead";
         public const string VERSION = "1.0";
 
