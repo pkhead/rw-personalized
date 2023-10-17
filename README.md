@@ -43,7 +43,7 @@ No, this mod doesn't actually personalize your Rain World experience using state
 I'm just having too much fun writing this readme. In actuality, it just does
 various miscellaneous things. Current features include:
 - Blue Lizards, Caramel Lizards, and Grapple Worms have a chance to be "shiny" (i.e., differently colored)
-- You may encounter Larry (configurable through Spawn Chance in the Remix config)
+- You may encounter "Larry" (configurable through Spawn Chance in the Remix config)
 
 In the future I may add more funny miscellaneous things.
 
