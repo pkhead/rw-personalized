@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using BepInEx;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace RWMod
 {
@@ -13,15 +13,47 @@ namespace RWMod
         private static AbstractRoom previousRoom = null;
         private static float darknessMultiplier = 1f;
 
+        private static BepInEx.Logging.ManualLogSource logger;
+
+        public static void Init(RWMod mod)
+        {
+            logger = mod.logSource;
+
+            /*IL.Player.Update += (il) =>
+            {
+                logger.LogMessage("IL Hooking Player.Update...");
+
+                try {
+                    ILCursor c = new ILCursor(il);
+                    ILProcessor proc = c.Body.GetILProcessor();
+                    
+                    Instruction noOverride = il.Body.Instructions[0];
+
+                    c.Goto(0); // insert at the start of function
+                    c.Emit(OpCodes.Ldarg_0); // load this
+                    c.EmitDelegate<Func<Player, bool>>(Player_Update); // call It update method
+                    c.Emit(OpCodes.Brfalse, noOverride); // if update method did anything
+                        c.Emit(OpCodes.Ldarg_0); // load this
+                        c.Emit(OpCodes.Ldarg_1); // load eu parameter
+                        c.Emit(OpCodes.Call, typeof(Creature).GetMethod("Update")); // call Creature::Update 
+                        c.Emit(OpCodes.Ret); // exit function early
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e);
+                }
+            };*/
+        }
+
         public static void ApplyHooks()
         {
-            On.Player.Update += Player_Update;
             On.PlayerGraphics.DefaultFaceSprite += PlayerGraphics_DefaultFaceSprite;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             On.Player.NewRoom += Player_NewRoom;
             On.Room.Update += Room_Update;
             On.RoomCamera.Update += RoomCamera_Update;
             On.Player.ShortCutColor += Player_ShortCutColor;
+            On.Player.Update += Player_Update;
         }
 
         public static void Cleanup()
@@ -213,13 +245,8 @@ namespace RWMod
                     if (abstractCreature.realizedCreature != null)
                     {
                         Player player = abstractCreature.realizedCreature as Player;
-                        if (player.room.abstractRoom != self.room.abstractRoom || player.dead) continue;
-                
-                        // rendering freezes whenever a player is going through a pipe,
-                        // i don't know what causes this so i just put this check out
-                        // of desperation (doesn't seem to change anything)
-                        if (player.bodyChunks[0] == null || self.bodyChunkConnections[0] == null) continue;
-
+                        if (player.dead || (player.room != null && player.room.abstractRoom != self.room.abstractRoom)) continue;
+                        
                         Vector2 pos = player.bodyChunks[0].pos;
 
                         if ((pos - selfPos).magnitude < minDist)

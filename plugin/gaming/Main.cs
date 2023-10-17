@@ -26,6 +26,7 @@ namespace RWMod {
         private readonly Dictionary<EntityID, bool> isShiny = new Dictionary<EntityID, bool>();
 
         private bool isInit = false;
+        public BepInEx.Logging.ManualLogSource logSource;
 
         public RWMod() {}
 
@@ -38,6 +39,10 @@ namespace RWMod {
         {
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
             //On.RainWorld.OnModsDisabled += RainWorld_OnModsDisabled;
+
+            logSource = BepInEx.Logging.Logger.CreateLogSource("Personalized");
+
+            It.Init(this);
         }
 
         private void RainWorld_OnModsDisabled(On.RainWorld.orig_OnModsDisabled orig, RainWorld self, ModManager.Mod[] newlyDisabledMods)
