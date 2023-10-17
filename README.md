@@ -39,7 +39,7 @@ Our benefactors are people who support this project and are generous enough to p
 Server error
 
 ## Features
-No, this mod doesn't actually personalize your Rain World experience using state-of-the-art A.I... yet.
+No, this mod doesn't actually personalize your Rain World experience using state-of-the-art A.I (...yet).
 I'm just having too much fun writing this readme. In actuality, it just does
 various miscellaneous things. Current features include:
 - Blue Lizards, Caramel Lizards, and Grapple Worms have a chance to be "shiny" (i.e., differently colored)
@@ -72,3 +72,7 @@ dotnet tool restore
 # build the project
 dotnet cake
 ```
+Once executed, there will be a folder called `out` containing the mod contents,
+and a copy of `out` will be put in the Rain World mod folder.
+
+Running `dotnet cake --target=Build` instead will not put the mod into the Rain World mod folder.
