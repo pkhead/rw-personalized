@@ -1,16 +1,42 @@
+using System.Collections.Generic;
 using BepInEx;
 using UnityEngine;
 
 namespace RWMod
 {
-    public partial class RWMod : BaseUnityPlugin
+    public class It
     {
-        private bool oldPressState = false;
-        private int spawnTicker = -1;
-        private AbstractRoom previousRoom = null;
-        private float darknessMultiplier = 1f;
+        private static readonly List<AbstractWorldEntity> ghosts = new List<AbstractWorldEntity>();
+        
+        private static bool oldPressState = false;
+        private static int spawnTicker = -1;
+        private static AbstractRoom previousRoom = null;
+        private static float darknessMultiplier = 1f;
 
-        private void Player_NewRoom(On.Player.orig_NewRoom orig, Player self, Room newRoom)
+        public static void ApplyHooks()
+        {
+            On.Player.Update += Player_Update;
+            On.PlayerGraphics.DefaultFaceSprite += PlayerGraphics_DefaultFaceSprite;
+            On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
+            On.Player.NewRoom += Player_NewRoom;
+            On.Room.Update += Room_Update;
+            On.RoomCamera.Update += RoomCamera_Update;
+            On.Player.ShortCutColor += Player_ShortCutColor;
+        }
+
+        public static void Cleanup()
+        {
+            ghosts.Clear();
+        }
+
+        public static void Reset()
+        {
+            spawnTicker = -1;
+            previousRoom = null;
+            darknessMultiplier = 1f;
+        }
+
+        private static void Player_NewRoom(On.Player.orig_NewRoom orig, Player self, Room newRoom)
         {
             orig(self, newRoom);
 
@@ -53,7 +79,7 @@ namespace RWMod
         }
 
         // Spawn "it" in a story session
-        private void SpawnIt(Room realRoom)
+        private static void SpawnIt(Room realRoom)
         {
             AbstractRoom room = realRoom.abstractRoom;
             if (room.shelter) return;
@@ -84,7 +110,7 @@ namespace RWMod
             Debug.Log("Spawned IT");
         }
 
-        private void Room_Update(On.Room.orig_Update orig, Room self)
+        private static void Room_Update(On.Room.orig_Update orig, Room self)
         {
             orig(self);
 
@@ -110,7 +136,7 @@ namespace RWMod
             oldPressState = pressState;
         }
 
-        private string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite orig, PlayerGraphics self, float eyeScale)
+        private static string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite orig, PlayerGraphics self, float eyeScale)
         {
             if (ghosts.Contains(self.player.abstractCreature))
             {
@@ -120,7 +146,7 @@ namespace RWMod
             return orig(self, eyeScale);
         }
 
-        private void PlayerGraphics_DrawSprites(
+        private static void PlayerGraphics_DrawSprites(
             On.PlayerGraphics.orig_DrawSprites orig,
             PlayerGraphics self,
             RoomCamera.SpriteLeaser sLeaser,
@@ -150,13 +176,13 @@ namespace RWMod
 
         // darken screen based off distance from "It" to target player
         // the amount to darken screen by is determined in Player_Update
-        private void RoomCamera_Update(On.RoomCamera.orig_Update orig, RoomCamera self)
+        private static void RoomCamera_Update(On.RoomCamera.orig_Update orig, RoomCamera self)
         {
             orig(self);
             self.effect_darkness = 1f - (1f - self.effect_darkness) * darknessMultiplier;
         }
 
-        private Color Player_ShortCutColor(On.Player.orig_ShortCutColor orig, Player self)
+        private static Color Player_ShortCutColor(On.Player.orig_ShortCutColor orig, Player self)
         {
             if (ghosts.Contains(self.abstractCreature))
             {
@@ -168,7 +194,7 @@ namespace RWMod
             }
         }
 
-        private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
+        private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             if (ghosts.Contains(self.abstractCreature))
             {

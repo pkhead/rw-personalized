@@ -1,10 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Security;
 using System.Security.Permissions;
 using BepInEx;
-using IL.MoreSlugcats;
-using UnityEngine;
 
 #pragma warning disable CS0618
 [module: UnverifiableCode]
@@ -27,7 +24,6 @@ namespace RWMod {
         // if BlueLizard, then it renders the lizard as yellow/white
         // if a SpitLizard, then it renders the lizard as black/blue
         private readonly Dictionary<EntityID, bool> isShiny = new Dictionary<EntityID, bool>();
-        private readonly List<AbstractWorldEntity> ghosts = new List<AbstractWorldEntity>();
 
         private bool isInit = false;
 
@@ -71,20 +67,13 @@ namespace RWMod {
             On.LizardGraphics.ctor += LizardGraphics_ctor;
             On.LizardGraphics.ApplyPalette += LizardGraphics_ApplyPalette;
 
-            // hooks for "it"
-            On.Player.Update += Player_Update;
-            On.PlayerGraphics.DefaultFaceSprite += PlayerGraphics_DefaultFaceSprite;
-            On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
-            On.Player.NewRoom += Player_NewRoom;
-            On.Room.Update += Room_Update;
-            On.RoomCamera.Update += RoomCamera_Update;
-            On.Player.ShortCutColor += Player_ShortCutColor;
+            It.ApplyHooks();
         }
 
         private void Cleanup()
         {
             isShiny.Clear();
-            ghosts.Clear();
+            It.Cleanup();
         }
 
         // cleanup hooks
@@ -97,9 +86,7 @@ namespace RWMod {
         private void GameSession_ctor(On.GameSession.orig_ctor orig, GameSession self, RainWorldGame game)
         {
             orig(self, game);
-            spawnTicker = -1;
-            previousRoom = null;
-            darknessMultiplier = 1f;
+            It.Reset();
             Cleanup();
         }
     }
