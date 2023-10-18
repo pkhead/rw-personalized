@@ -1,0 +1,7 @@
+- play random music cues for no reason
+- shiny bluefruit (sort of like emerald's tweaks and features)
+- need more random features
+- make game freezing on capture optional
+- don't consider players that are in pipes
+- can sometimes crash when choosing entrance
+- "stalker" behavior for It
