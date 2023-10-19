@@ -1,5 +1,5 @@
 - play random music cues for no reason
-- shiny bluefruit (sort of like emerald's tweaks and features)
+- shiny bluefruit (sort of like emerald's tweaks and features)(DONE i think)
 - need more random features
 - make game freezing on capture optional
 - don't consider players that are in pipes
