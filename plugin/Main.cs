@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Security.Permissions;
 using BepInEx;
+using RWCustom;
+using UnityEngine;
 
 #pragma warning disable CS0618
 [module: UnverifiableCode]
@@ -72,8 +75,16 @@ namespace RWMod {
             On.LizardGraphics.ctor += LizardGraphics_ctor;
             On.LizardGraphics.ApplyPalette += LizardGraphics_ApplyPalette;
 
+            //bluefruit graphics
+            On.DangleFruit.ApplyPalette += BlueFruitShiny;
+
+
             It.ApplyHooks();
         }
+
+
+
+
 
         private void Cleanup()
         {
