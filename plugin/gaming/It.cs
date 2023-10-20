@@ -14,35 +14,11 @@ namespace RWMod
         private static float darknessMultiplier = 1f;
 
         private static BepInEx.Logging.ManualLogSource logger;
+        private static bool gameCrash = false;
 
         public static void Init(RWMod mod)
         {
             logger = mod.logSource;
-
-            /*IL.Player.Update += (il) =>
-            {
-                logger.LogMessage("IL Hooking Player.Update...");
-
-                try {
-                    ILCursor c = new ILCursor(il);
-                    ILProcessor proc = c.Body.GetILProcessor();
-                    
-                    Instruction noOverride = il.Body.Instructions[0];
-
-                    c.Goto(0); // insert at the start of function
-                    c.Emit(OpCodes.Ldarg_0); // load this
-                    c.EmitDelegate<Func<Player, bool>>(Player_Update); // call It update method
-                    c.Emit(OpCodes.Brfalse, noOverride); // if update method did anything
-                        c.Emit(OpCodes.Ldarg_0); // load this
-                        c.Emit(OpCodes.Ldarg_1); // load eu parameter
-                        c.Emit(OpCodes.Call, typeof(Creature).GetMethod("Update")); // call Creature::Update 
-                        c.Emit(OpCodes.Ret); // exit function early
-                }
-                catch (Exception e)
-                {
-                    logger.LogError(e);
-                }
-            };*/
         }
 
         public static void ApplyHooks()
@@ -59,10 +35,12 @@ namespace RWMod
         public static void Cleanup()
         {
             ghosts.Clear();
+            gameCrash = false;
         }
 
         public static void Reset()
         {
+            gameCrash = false;
             spawnTicker = -1;
             previousRoom = null;
             darknessMultiplier = 1f;
@@ -92,8 +70,8 @@ namespace RWMod
 
                     ghosts.Clear();
 
-                    // start spawn timer if this room isn't a shelter
-                    if (!newRoom.abstractRoom.shelter)
+                    // start spawn timer if this room isn't a shelter/gate
+                    if (!newRoom.abstractRoom.shelter && !newRoom.abstractRoom.gate)
                     {
                         float diceRoll = Random.value;
                         
@@ -114,7 +92,7 @@ namespace RWMod
         private static void SpawnIt(Room realRoom)
         {
             AbstractRoom room = realRoom.abstractRoom;
-            if (room.shelter) return;
+            if (room.shelter || room.gate) return;
             if (!realRoom.game.IsStorySession) return;
 
             var playerState = realRoom.game.session.Players[0].state as PlayerState;
@@ -228,6 +206,13 @@ namespace RWMod
 
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
+            // when the player is caught, this will freeze the game
+            // but also allow the player to exit to the menu
+            if (gameCrash)
+            {
+                throw new System.Exception("CAUGHT YOU");
+            }
+
             if (ghosts.Contains(self.abstractCreature))
             {
                 darknessMultiplier = 1f;
@@ -267,13 +252,13 @@ namespace RWMod
 
                     // if i touch player, freeze the application :trolle:
                     float dist = (targetPos.Value - selfPos).magnitude;
-                    if (dist < 30f && !self.abstractCreature.world.game.devToolsActive)
+                    if (!targetPlayer.inShortcut && dist < 30f && !self.abstractCreature.world.game.devToolsActive)
                     {
-                        targetPlayer.Die();
-
                         // only if this room is being viewed
                         if (isRoomViewed)
-                            while (true) {}
+                            gameCrash = true;
+                        else
+                            targetPlayer.Die();
                     }
 
                     // make screen darker the closer it is to the player
