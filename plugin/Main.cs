@@ -33,7 +33,7 @@ namespace RWMod {
 
         public RWMod() {}
 
-        private bool IsCreatureShiny(AbstractCreature creature)
+        private bool IsShiny(AbstractPhysicalObject creature)
         {
             return isShiny.TryGetValue(creature.ID, out bool creatureIsShiny) && creatureIsShiny;
         }
@@ -76,8 +76,8 @@ namespace RWMod {
             On.LizardGraphics.ApplyPalette += LizardGraphics_ApplyPalette;
 
             //bluefruit graphics
-            On.DangleFruit.ApplyPalette += BlueFruitShiny;
-
+            On.DangleFruit.ctor += DangleFruit_ctor;
+            On.DangleFruit.ApplyPalette += DangleFruit_ApplyPalette;
 
             It.ApplyHooks();
         }

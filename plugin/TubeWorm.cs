@@ -30,7 +30,7 @@ namespace RWMod
             Random.State oldState = Random.state;
             Random.InitState(self.worm.abstractCreature.ID.RandomSeed);
 
-            if (IsCreatureShiny(self.worm.abstractCreature))
+            if (IsShiny(self.worm.abstractCreature))
             {
                 self.color = Custom.HSL2RGB(
                     Mathf.Lerp(42f, 59f, Random.value) / 360f,
@@ -54,7 +54,7 @@ namespace RWMod
             // make stripes white instead of black
             orig(self, sLeaser, rCam, palette);
 
-            if (IsCreatureShiny(self.worm.abstractCreature))
+            if (IsShiny(self.worm.abstractCreature))
             {
                 sLeaser.sprites[1].color = new Color(0.9f, 0.9f, 0.9f);
             }
