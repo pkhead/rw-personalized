@@ -94,8 +94,7 @@ namespace RWMod
             AbstractRoom room = realRoom.abstractRoom;
             if (room.shelter || room.gate) return;
             if (!realRoom.game.IsStorySession) return;
-
-            var playerState = realRoom.game.session.Players[0].state as PlayerState;
+            
             var entityID = realRoom.game.GetNewID();
             
             WorldCoordinate coords;
@@ -111,10 +110,8 @@ namespace RWMod
             newCreature.state = new MoreSlugcats.PlayerNPCState(newCreature, 0);
             ghosts.Add(newCreature);
 
-            WorldCoordinate leading = realRoom.world.NodeInALeadingToB(exitRoom, room.index);
-
             newCreature.ChangeRooms(
-                new WorldCoordinate(room.index, 0, 0, leading.abstractNode)
+                new WorldCoordinate(room.index, 0, 0, exitIndex)
             );
 
             Debug.Log("Spawned IT");
