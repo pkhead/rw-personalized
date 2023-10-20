@@ -1,5 +1,5 @@
 - play random music cues for no reason
-- shiny bluefruit (they become red)
+- shiny bluefruit (sort of like emerald's tweaks and features)(DONE i think)
 - poisonous green bluefruit
 - need more random features
 - make game freezing on capture optional
