@@ -1,4 +1,12 @@
+# Visual Studio Code workspace configuration
 /.vscode
-/plugin/gaming/bin
-/plugin/gaming/obj
+
+# MSBuild output
+/plugin/bin
+/plugin/obj
+
+# Mod DLL
+/mod/plugins/gaming.dll
+
+# build.cake mod output folder
 /out
