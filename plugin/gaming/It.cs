@@ -189,6 +189,7 @@ namespace RWMod
             self.effect_darkness = 1f - (1f - self.effect_darkness) * darknessMultiplier;
         }
 
+        // set shortcut color of It to red
         private static Color Player_ShortCutColor(On.Player.orig_ShortCutColor orig, Player self)
         {
             if (ghosts.Contains(self.abstractCreature))
@@ -201,6 +202,7 @@ namespace RWMod
             }
         }
 
+        // "IT" update procedure
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             // when the player is caught, this will freeze the game
