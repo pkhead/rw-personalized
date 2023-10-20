@@ -13,7 +13,7 @@ namespace RWMod {
     {
         public const string MOD_ID = "pkhead.personalizer";
         public const string AUTHOR = "pkhead";
-        public const string VERSION = "1.0";
+        public const string VERSION = "1.0.1";
 
         // chance that some specific creatures is "shiny"
         public float ShinyChance {
