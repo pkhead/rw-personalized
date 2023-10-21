@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Security;
 using System.Security.Permissions;
 using BepInEx;
-using RWCustom;
-using UnityEngine;
 
 #pragma warning disable CS0618
 [module: UnverifiableCode]
@@ -56,36 +54,36 @@ namespace RWMod {
         private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
         {
             orig(self);
-
             if (isInit) return;
             isInit = true;
 
-            MachineConnector.SetRegisteredOI(MOD_ID, Options.instance);
+            try
+            {
+                MachineConnector.SetRegisteredOI(MOD_ID, Options.instance);
 
-            // cleanup hooks
-            On.RainWorldGame.ShutDownProcess += RainWorldGame_ShutDownProcess;
-            On.GameSession.ctor += GameSession_ctor;
+                // cleanup hooks
+                On.RainWorldGame.ShutDownProcess += RainWorldGame_ShutDownProcess;
+                On.GameSession.ctor += GameSession_ctor;
 
-            // tube worm graphics
-            On.TubeWormGraphics.ctor += TubeWormGraphics_ctor;
-            On.TubeWormGraphics.ApplyPalette += TubeWormGraphics_ApplyPalette;
+                // tube worm graphics
+                On.TubeWormGraphics.ctor += TubeWormGraphics_ctor;
+                On.TubeWormGraphics.ApplyPalette += TubeWormGraphics_ApplyPalette;
 
-            // lizard graphics
-            On.Lizard.ctor += Lizard_ctor;
-            On.LizardGraphics.ctor += LizardGraphics_ctor;
-            On.LizardGraphics.ApplyPalette += LizardGraphics_ApplyPalette;
+                // lizard graphics
+                On.Lizard.ctor += Lizard_ctor;
+                On.LizardGraphics.ctor += LizardGraphics_ctor;
+                On.LizardGraphics.ApplyPalette += LizardGraphics_ApplyPalette;
 
-            //bluefruit graphics
-            On.DangleFruit.ctor += DangleFruit_ctor;
-            On.DangleFruit.ApplyPalette += DangleFruit_ApplyPalette;
-
-            It.ApplyHooks();
+                // bluefruit
+                DangleFruitHooks();
+                It.ApplyHooks();
+            }
+            catch (Exception e)
+            {
+                logSource.LogError(e.Message);
+            }
         }
-
-
-
-
-
+        
         private void Cleanup()
         {
             isShiny.Clear();

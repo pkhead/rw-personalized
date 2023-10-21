@@ -9,6 +9,10 @@
 			<Private>true</Private>
 		</Reference>
 
+		<Reference Include="$(RainWorldDir)/BepInEx/core/MonoMod.RuntimeDetour.dll">
+			<Private>true</Private>
+		</Reference>
+
 		<Reference Include="$(RainWorldDir)/BepInEx/plugins/HOOKS-Assembly-CSharp.dll">
 			<Private>true</Private>
 		</Reference>
