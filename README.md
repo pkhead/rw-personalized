@@ -1,4 +1,6 @@
 ## Rain World "Personalizer"
+[Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3053174477)
+
 This is a Rain World mod that personalizes your Rain World experience using state-of-the-art A.I.
 The personalization algorithm enhances your game using your personal data which includes:
 - Your operating system
@@ -42,7 +44,7 @@ Server error
 No, this mod doesn't actually personalize your Rain World experience using state-of-the-art A.I (...yet).
 I'm just having too much fun writing this readme. In actuality, it just does
 various miscellaneous things. Current features include:
-- Blue Lizards, Caramel Lizards, and Grapple Worms have a chance to be "shiny" (i.e., differently colored)
+- Certain creatures and objects have a chance to be "shiny" (i.e., differently colored)
 - You may encounter "Larry" (configurable through Spawn Chance in the Remix config)
 
 In the future I may add more funny miscellaneous things.
