@@ -11,7 +11,7 @@ Task("Build")
         throw new Exception("The environment variable 'RainWorldDir' is not provided");
     }
 
-    DotNetBuild("./plugin/gaming.sln", new DotNetBuildSettings
+    DotNetBuild("./plugin/personalizer.sln", new DotNetBuildSettings
     {
         Configuration = configuration
     });
@@ -21,7 +21,7 @@ Task("Build")
     CleanDirectory("./out");
     CopyDirectory("./assets", "./out");
     CreateDirectory("./out/plugins");
-    CopyFile($"./plugin/gaming/bin/{configuration}/net48/gaming.dll", "./out/plugins/mod.dll");
+    CopyFile($"./plugin/bin/{configuration}/net48/personalizer.dll", "./out/plugins/Personalizer.dll");
 });
 
 Task("Install")
