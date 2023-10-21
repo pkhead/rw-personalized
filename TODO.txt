@@ -1,10 +1,12 @@
+x = done
+
 - play random music cues for no reason
 - shiny bluefruit (sort of like emerald's tweaks and features)(DONE i think)
 - poisonous green bluefruit
 - need more random features
 - make game freezing on capture optional
-- don't chase players that are in pipes
-- can sometimes crash when choosing entrance
+x don't chase players that are in pipes
+x can sometimes crash when choosing entrance
 - "stalker" behavior for It
 - violencing It stuns it for a bit
 - idea: remix config tabs for each level of spookiness
