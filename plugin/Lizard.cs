@@ -40,7 +40,7 @@ namespace RWMod
             // rendered as black/blue instead
             if (ModManager.MSC)
             {
-                if (self.Caramel && IsCreatureShiny(self.lizard.abstractCreature))
+                if (self.Caramel && IsShiny(self.lizard.abstractCreature))
                 {
                     self.lizard.effectColor = new Color(0.0f, 0.0f, 1.0f);
                 }
@@ -56,7 +56,7 @@ namespace RWMod
         ) {
             orig(self, sLeaser, rCam, palette);
 
-            if (!self.debugVisualization && IsCreatureShiny(self.lizard.abstractCreature))
+            if (!self.debugVisualization && IsShiny(self.lizard.abstractCreature))
             {
                 // color body of shiny spit lizard (black)
                 if (ModManager.MSC && self.Caramel)

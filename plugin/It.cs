@@ -123,7 +123,7 @@ namespace RWMod
 
             Room activeRoom = self.game.cameras[0].room;
             if (self != activeRoom) return;
-
+            //idk why this is broken ):
             bool pressState = Input.GetKey(KeyCode.G);
 
             if (self.game.IsStorySession && ModManager.MSC)

@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security;
 using System.Security.Permissions;
 using BepInEx;
+using RWCustom;
+using UnityEngine;
 
 #pragma warning disable CS0618
 [module: UnverifiableCode]
@@ -13,7 +16,7 @@ namespace RWMod {
     {
         public const string MOD_ID = "pkhead.personalizer";
         public const string AUTHOR = "pkhead";
-        public const string VERSION = "1.0.1";
+        public const string VERSION = "1.1";
 
         // chance that some specific creatures is "shiny"
         public float ShinyChance {
@@ -30,7 +33,7 @@ namespace RWMod {
 
         public RWMod() {}
 
-        private bool IsCreatureShiny(AbstractCreature creature)
+        private bool IsShiny(AbstractPhysicalObject creature)
         {
             return isShiny.TryGetValue(creature.ID, out bool creatureIsShiny) && creatureIsShiny;
         }
@@ -72,8 +75,16 @@ namespace RWMod {
             On.LizardGraphics.ctor += LizardGraphics_ctor;
             On.LizardGraphics.ApplyPalette += LizardGraphics_ApplyPalette;
 
+            //bluefruit graphics
+            On.DangleFruit.ctor += DangleFruit_ctor;
+            On.DangleFruit.ApplyPalette += DangleFruit_ApplyPalette;
+
             It.ApplyHooks();
         }
+
+
+
+
 
         private void Cleanup()
         {

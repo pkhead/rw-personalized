@@ -48,9 +48,10 @@ various miscellaneous things. Current features include:
 In the future I may add more funny miscellaneous things.
 
 ## Building
-First, this project will reference assemblies directly from the Rain World install directory.
-I'm too ignorant to figure out if there's anything that could potentially go wrong with that.
-You must set an environment variable "RainWorldDir" to the Rain World install directory before building.
+First, this project will reference assemblies from the Rain World install directory. I've set some
+fields in the .csproj file which I believe will copy the required references instead of referencing
+them directly. As such, you must set an environment variable "RainWorldDir" to the Rain World install directory before
+building.
 
 PowerShell (Windows):
 ```powershell

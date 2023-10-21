@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>11</LangVersion>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<Reference Include="$(RainWorldDir)/BepInEx/core/BepInEx.dll">
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="$(RainWorldDir)/BepInEx/plugins/HOOKS-Assembly-CSharp.dll">
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="$(RainWorldDir)/BepInEx/utils/PUBLIC-Assembly-CSharp.dll">
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.CoreModule.dll">
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.dll">
+			<Private>true</Private>
+		</Reference>
+		
+		<Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.InputModule.dll">
+			<Private>true</Private>
+		</Reference>
+
+		<Reference Include="$(RainWorldDir)/RainWorld_Data/Managed/UnityEngine.InputLegacyModule.dll">
+			<Private>true</Private>
+		</Reference>
+	</ItemGroup>
+</Project>
