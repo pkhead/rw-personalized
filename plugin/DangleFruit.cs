@@ -12,7 +12,8 @@ namespace RWMod
             On.DangleFruit.ctor += DangleFruit_ctor;
             On.DangleFruit.ApplyPalette += DangleFruit_ApplyPalette;
             On.DangleFruit.BitByPlayer += DangleFruit_BitByPlayer;
-
+            On.SlugcatStats.NourishmentOfObjectEaten += SlugcatStats_NourishmentOfObjectEaten;
+            
             Hook dangleFruitHook = new(
                 typeof(DangleFruit).GetProperty("FoodPoints", BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
                 typeof(RWMod).GetMethod("DangleFruit_FoodPoints_get", BindingFlags.Instance | BindingFlags.Public),
@@ -79,7 +80,13 @@ namespace RWMod
         public delegate int orig_FoodPoints(DangleFruit self);
         public int DangleFruit_FoodPoints_get(orig_FoodPoints orig, DangleFruit self)
         {
-            if (GetEntityData(self.abstractPhysicalObject).isShiny)
+            var entityData = GetEntityData(self.abstractPhysicalObject);
+
+            if (entityData.isRotten)
+            {
+                return 0;
+            }
+            else if (entityData.isShiny)
             {
                 return 2;
             }
@@ -87,6 +94,19 @@ namespace RWMod
             {
                 return orig(self);
             }
+        }
+
+        private int SlugcatStats_NourishmentOfObjectEaten(On.SlugcatStats.orig_NourishmentOfObjectEaten orig, SlugcatStats.Name slugcatIndex, IPlayerEdible eatenobject)
+        {
+            int nourishment = orig(slugcatIndex, eatenobject);
+            if (nourishment < 0) return nourishment;
+
+            // if player ate rotten dangle fruit
+            // only give player 1/4th of a food pip
+            if ((eatenobject is DangleFruit) && GetEntityData((eatenobject as DangleFruit).abstractPhysicalObject).isRotten)
+                return 1;
+
+            return nourishment;
         }
     }
 }
