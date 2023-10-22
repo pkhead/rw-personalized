@@ -8,8 +8,5 @@
 /plugin/bin
 /plugin/obj
 
-# Mod DLL
-/mod/plugins/gaming.dll
-
 # mod build output
 /out
