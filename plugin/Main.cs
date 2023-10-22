@@ -71,7 +71,7 @@ namespace RWMod {
             logSource = BepInEx.Logging.Logger.CreateLogSource("Personalized");
 
             It.Init(this);
-            Sickness.Init(this);
+            FoodSickness.Init(this);
         }
 
         private void RainWorld_OnModsDisabled(On.RainWorld.orig_OnModsDisabled orig, RainWorld self, ModManager.Mod[] newlyDisabledMods)
@@ -104,7 +104,10 @@ namespace RWMod {
 
                 // bluefruit
                 DangleFruitHooks();
+
+                // other
                 It.ApplyHooks();
+                FoodSickness.ApplyHooks();
             }
             catch (Exception e)
             {
@@ -116,7 +119,7 @@ namespace RWMod {
         {
             entityData.Clear();
             It.Cleanup();
-            Sickness.Cleanup();
+            FoodSickness.Cleanup();
         }
 
         // cleanup hooks
@@ -130,7 +133,7 @@ namespace RWMod {
         {
             orig(self, game);
             It.Reset();
-            Sickness.Reset();
+            FoodSickness.Reset();
             Cleanup();
         }
     }

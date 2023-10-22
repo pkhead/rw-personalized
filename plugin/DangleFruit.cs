@@ -58,7 +58,7 @@ namespace RWMod
             {
                 if (entityData.isRotten)
                 {
-                    self.color = new Color(47f / 255f, 87f / 255f, 36 / 255f);
+                    self.color = new Color(0f, 0.5f, 0f);
                 }
                 if (entityData.isShiny)
                 {
@@ -76,7 +76,7 @@ namespace RWMod
                 if (self.bites < 1 && entityData.isRotten)
                 {
                     Debug.Log("Player ate rotten fruit");
-                    // TODO: make sick
+                    FoodSickness.Infect(grasp.grabber.abstractCreature);
                 }
             }
         }
