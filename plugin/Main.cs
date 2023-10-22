@@ -58,6 +58,11 @@ namespace RWMod {
             }
         }
 
+        private bool TryGetEntityData(AbstractPhysicalObject entity, out EntityData data)
+        {
+            return entityData.TryGetValue(entity.ID, out data);
+        }
+
         public void OnEnable()
         {
             On.RainWorld.OnModsInit += RainWorld_OnModsInit;
@@ -66,6 +71,7 @@ namespace RWMod {
             logSource = BepInEx.Logging.Logger.CreateLogSource("Personalized");
 
             It.Init(this);
+            Sickness.Init(this);
         }
 
         private void RainWorld_OnModsDisabled(On.RainWorld.orig_OnModsDisabled orig, RainWorld self, ModManager.Mod[] newlyDisabledMods)
@@ -110,6 +116,7 @@ namespace RWMod {
         {
             entityData.Clear();
             It.Cleanup();
+            Sickness.Cleanup();
         }
 
         // cleanup hooks
@@ -123,6 +130,7 @@ namespace RWMod {
         {
             orig(self, game);
             It.Reset();
+            Sickness.Reset();
             Cleanup();
         }
     }

@@ -53,47 +53,50 @@ namespace RWMod
         {
             // call original code
             orig(self, sLeaser, rCam, palette);
-            var entityData = GetEntityData(self.abstractPhysicalObject);
             
-            if (entityData.isRotten)
+            if (TryGetEntityData(self.abstractPhysicalObject, out var entityData))
             {
-                self.color = new Color(47f / 255f, 87f / 255f, 36 / 255f);
-            }
-            if (entityData.isShiny)
-            {
-                self.color = RainWorld.SaturatedGold;
+                if (entityData.isRotten)
+                {
+                    self.color = new Color(47f / 255f, 87f / 255f, 36 / 255f);
+                }
+                if (entityData.isShiny)
+                {
+                    self.color = RainWorld.SaturatedGold;
+                }
             }
         }
 
         private void DangleFruit_BitByPlayer(On.DangleFruit.orig_BitByPlayer orig, DangleFruit self, Creature.Grasp grasp, bool eu)
         {
             orig(self, grasp, eu);
-            var entityData = GetEntityData(self.abstractPhysicalObject);
 
-            if (self.bites < 1 && entityData.isRotten)
+            if (TryGetEntityData(self.abstractPhysicalObject, out var entityData))
             {
-                Debug.Log("Player ate rotten fruit");
-                // TODO: make sick
+                if (self.bites < 1 && entityData.isRotten)
+                {
+                    Debug.Log("Player ate rotten fruit");
+                    // TODO: make sick
+                }
             }
         }
 
         public delegate int orig_FoodPoints(DangleFruit self);
         public int DangleFruit_FoodPoints_get(orig_FoodPoints orig, DangleFruit self)
         {
-            var entityData = GetEntityData(self.abstractPhysicalObject);
+            if (TryGetEntityData(self.abstractPhysicalObject, out var entityData))
+            {
+                if (entityData.isRotten)
+                {
+                    return 0;
+                }
+                else if (entityData.isShiny)
+                {
+                    return 2;
+                }
+            }
 
-            if (entityData.isRotten)
-            {
-                return 0;
-            }
-            else if (entityData.isShiny)
-            {
-                return 2;
-            }
-            else
-            {
-                return orig(self);
-            }
+            return orig(self);
         }
 
         private int SlugcatStats_NourishmentOfObjectEaten(On.SlugcatStats.orig_NourishmentOfObjectEaten orig, SlugcatStats.Name slugcatIndex, IPlayerEdible eatenobject)
