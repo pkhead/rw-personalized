@@ -19,6 +19,17 @@ namespace RWMod
             )
         );
 
+        public static Configurable<int> RottenChance = instance.config.Bind(
+            key: "rottenChance",
+            defaultValue: 20,
+            info: new ConfigurableInfo(
+                "The chance that some objects will be rotten",
+                new ConfigAcceptableRange<int>(0, 100),
+                "",
+                "RottenChance"
+            )
+        );
+
         public static Configurable<int> SpawnChance = instance.config.Bind(
             key: "spawnChance",
             defaultValue: 2,
@@ -30,18 +41,34 @@ namespace RWMod
             )
         );
 
+        public static Configurable<int> ItVolume = instance.config.Bind(
+            key: "itVolume",
+            defaultValue: 100,
+            info: new ConfigurableInfo(
+                "The volume of IT",
+                new ConfigAcceptableRange<int>(0, 100),
+                "",
+                "ItVolume"
+            )
+        );
+
         public Options()
         {}
 
         public override void Initialize()
         {
             base.Initialize();
-            InitBuilder(1);
+            InitBuilder(2);
 
-            AddTab("General");
-            Title("Personalizer");
+            AddTab("Level 1");
+            Title("Level 1");
             AddSlider("Shiny Chance", "The chance that some creatures will be differently colored", ShinyChance, 160);
+            AddSlider("Rotten Chance", "The chance that some objects will be rotten", RottenChance, 160);
+
+            AddTab("Level 2", new Color(0.85f, 0.35f, 0.4f));
+            Title("Level 2");
             AddSlider("Spawn Chance", "The chance that it will spawn", SpawnChance, 160);
+            AddSlider("Volume", "The volume of it", ItVolume, 160);
         }
 
         #region UI Builder functions
@@ -64,9 +91,21 @@ namespace RWMod
             Tabs = new OpTab[tabCount];
         }
 
-        private void AddTab(string tabName)
+        private OpTab AddTab(string tabName, Color color)
         {
-            Tabs[++tabIndex] = new OpTab(this, tabName);
+            var tab = AddTab(tabName);
+            tab.colorButton = color;
+            return tab;
+        }
+
+        private OpTab AddTab(string tabName)
+        {
+            var tab = new OpTab(this, tabName);
+            Tabs[++tabIndex] = tab;
+            curY = MENU_TOP - 60;
+            curX = 0;
+            
+            return tab;
         }
 
         private void Title(string text)

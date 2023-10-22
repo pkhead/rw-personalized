@@ -215,7 +215,13 @@ namespace RWMod
             if (ghosts.Contains(self.abstractCreature))
             {
                 darknessMultiplier = 1f;
-                self.room.PlaySound(SoundID.Death_Rain_LOOP, self.mainBodyChunk);
+                self.room.PlaySound(
+                    SoundID.Death_Rain_LOOP,
+                    self.mainBodyChunk,
+                    false,
+                    Options.ItVolume.Value / 100f,
+                    1.0f
+                );
                 bool isRoomViewed = self.abstractCreature.world.game.cameras[0].room == self.room;
 
                 // get nearest player
