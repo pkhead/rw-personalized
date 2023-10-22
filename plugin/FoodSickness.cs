@@ -66,7 +66,6 @@ namespace RWMod
                     cursor.MarkLabel(label);
 
                     mod.logSource.LogDebug("IL injection success!");
-                    mod.logSource.LogDebug(il.ToString());
                 }
                 catch (Exception e)
                 {
