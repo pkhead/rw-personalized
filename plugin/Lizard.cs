@@ -12,11 +12,12 @@ namespace RWMod
 
             Random.State oldState = Random.state;
             Random.InitState(creature.ID.RandomSeed);
+            var entityData = GetEntityData(self.abstractCreature);
 
             // determine if lizard is shiny
-            isShiny[self.abstractCreature.ID] = Random.value < ShinyChance;
+            entityData.isShiny = Random.value < ShinyChance;
 
-            if (isShiny[self.abstractCreature.ID])
+            if (entityData.isShiny)
             {
                 // shiny blue lizard, so make the head yellow
                 if (self.Template.type == CreatureTemplate.Type.BlueLizard)
@@ -40,7 +41,7 @@ namespace RWMod
             // rendered as black/blue instead
             if (ModManager.MSC)
             {
-                if (self.Caramel && IsShiny(self.lizard.abstractCreature))
+                if (self.Caramel && GetEntityData(self.lizard.abstractCreature).isShiny)
                 {
                     self.lizard.effectColor = new Color(0.0f, 0.0f, 1.0f);
                 }
@@ -56,7 +57,7 @@ namespace RWMod
         ) {
             orig(self, sLeaser, rCam, palette);
 
-            if (!self.debugVisualization && IsShiny(self.lizard.abstractCreature))
+            if (!self.debugVisualization && GetEntityData(self.lizard.abstractCreature).isShiny)
             {
                 // color body of shiny spit lizard (black)
                 if (ModManager.MSC && self.Caramel)

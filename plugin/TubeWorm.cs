@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using BepInEx;
 using RWCustom;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
 
 namespace RWMod
@@ -17,7 +15,7 @@ namespace RWMod
             Random.InitState(creature.ID.RandomSeed);
 
             // determine if tube worm is shiny
-            isShiny[self.abstractCreature.ID] = Random.value < ShinyChance;
+            GetEntityData(self.abstractCreature).isShiny = Random.value < ShinyChance;
 
             Random.state = oldState;       
         }
@@ -30,7 +28,7 @@ namespace RWMod
             Random.State oldState = Random.state;
             Random.InitState(self.worm.abstractCreature.ID.RandomSeed);
 
-            if (IsShiny(self.worm.abstractCreature))
+            if (GetEntityData(self.worm.abstractCreature).isShiny)
             {
                 self.color = Custom.HSL2RGB(
                     Mathf.Lerp(42f, 59f, Random.value) / 360f,
@@ -54,14 +52,10 @@ namespace RWMod
             // make stripes white instead of black
             orig(self, sLeaser, rCam, palette);
 
-            if (IsShiny(self.worm.abstractCreature))
+            if (GetEntityData(self.worm.abstractCreature).isShiny)
             {
                 sLeaser.sprites[1].color = new Color(0.9f, 0.9f, 0.9f);
             }
         }
-
-
-
-
     }
 }

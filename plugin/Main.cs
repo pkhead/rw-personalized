@@ -21,19 +21,41 @@ namespace RWMod {
             get => (float) Options.ShinyChance.Value / 100f;
         }
 
+        public float RottenChance {
+            get => (float) Options.RottenChance.Value / 100f;
+        }
+
+        class EntityData
+        {
+            public bool isShiny = false;
+            public bool isRotten = false;
+        }
+
         // if TubeWorm, then it renders the tube worm as yellow/white
         // if BlueLizard, then it renders the lizard as yellow/white
         // if a SpitLizard, then it renders the lizard as black/blue
-        private readonly Dictionary<EntityID, bool> isShiny = new Dictionary<EntityID, bool>();
-
+        private readonly Dictionary<EntityID, EntityData> entityData = new();
         private bool isInit = false;
         public BepInEx.Logging.ManualLogSource logSource;
 
         public RWMod() {}
 
-        private bool IsShiny(AbstractPhysicalObject creature)
+        // get mod-specific data associated with this entity
+        // this table will be cleared at the start of every game session
+        private EntityData GetEntityData(AbstractPhysicalObject entity)
         {
-            return isShiny.TryGetValue(creature.ID, out bool creatureIsShiny) && creatureIsShiny;
+            EntityData data;
+
+            if (entityData.TryGetValue(entity.ID, out data))
+            {
+                return data;
+            }
+            else
+            {
+                data = new();
+                entityData.Add(entity.ID, data);
+                return data;
+            }
         }
 
         public void OnEnable()
@@ -86,7 +108,7 @@ namespace RWMod {
         
         private void Cleanup()
         {
-            isShiny.Clear();
+            entityData.Clear();
             It.Cleanup();
         }
 
