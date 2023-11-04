@@ -10,7 +10,8 @@ namespace RWMod
     public class FoodSickness
     {
         private static RWMod mod;
-        private readonly static Dictionary<EntityID, int> sicknessData = new();
+        private readonly static Dictionary<AbstractPhysicalObject, int> sicknessData = new();
+        private readonly static Dictionary<AbstractPhysicalObject, int> delayedSicknessData = new();
 
         // used for game serialization
         private readonly static List<int> sicknessSaveData = new();
@@ -29,6 +30,8 @@ namespace RWMod
                 {
                     ILCursor cursor = new(il);
 
+                    static bool isSickFunc(PlayerGraphics self) => SicknessLevel(self.player.abstractCreature) > 0;
+
                     // if (this.malnourished > 0f)
                     cursor.GotoNext(
                         x => x.MatchLdarg(0),
@@ -40,7 +43,7 @@ namespace RWMod
 
                     // if (SicknessLevel(self.player.abstractCreature) > 1 || this.malnourished > 0f)
                     cursor.Emit(OpCodes.Ldarg_0);
-                    cursor.EmitDelegate((PlayerGraphics self) => SicknessLevel(self.player.abstractCreature) > 1);
+                    cursor.EmitDelegate(isSickFunc);
                     cursor.Emit(OpCodes.Brtrue, branch);
 
                     // color2 = Color.Lerp(color2, Color.gray, 0.4f * num);
@@ -58,7 +61,7 @@ namespace RWMod
 
                     // if (SicknessLevel(this.player.abstractCreature) > 1) {
                     cursor.Emit(OpCodes.Ldarg_0);
-                    cursor.EmitDelegate((PlayerGraphics self) => SicknessLevel(self.player.abstractCreature) > 1);
+                    cursor.EmitDelegate(isSickFunc);
                     cursor.Emit(OpCodes.Brfalse, label);
 
                     // num = 1f;
@@ -79,23 +82,31 @@ namespace RWMod
 
         public static void Cleanup()
         {
-            mod.logSource.LogDebug("cleanup");
             sicknessData.Clear();
+            delayedSicknessData.Clear();
         }
         
-        public static void Infect(AbstractCreature absCreature)
+        public static void Infect(AbstractPhysicalObject thing)
         {
             // if creature was not already sick
-            if (SicknessLevel(absCreature) == 0)
+            if (DelayedSicknessLevel(thing) == 0)
             {
                 Debug.Log("infect creature");
-                sicknessData.Add(absCreature.ID, 1);
+                delayedSicknessData.Add(thing, 1);
             }
         }
 
-        public static int SicknessLevel(AbstractCreature absCreature)
+        public static int SicknessLevel(AbstractPhysicalObject thing)
         {
-            if (sicknessData.TryGetValue(absCreature.ID, out var value))
+            if (sicknessData.TryGetValue(thing, out var value))
+                return value;
+
+            return 0;
+        }
+
+        public static int DelayedSicknessLevel(AbstractPhysicalObject thing)
+        {
+            if (delayedSicknessData.TryGetValue(thing, out var value))
                 return value;
 
             return 0;
@@ -112,7 +123,7 @@ namespace RWMod
 
                 orig(self, absCreature, world);
 
-                if (SicknessLevel(absCreature) > 1)
+                if (SicknessLevel(absCreature) > 0)
                 {
                     mod.logSource.LogDebug("player is sick");
                     self.slugcatStats.runspeedFac *= 0.8f;
@@ -125,7 +136,7 @@ namespace RWMod
                 // pretend that slugcat is malnourished for the
                 // duration of the update call
                 bool oldMalnourished = self.slugcatStats.malnourished;
-                if (SicknessLevel(self.abstractCreature) > 1)
+                if (SicknessLevel(self.abstractCreature) > 0)
                     self.slugcatStats.malnourished = true;
 
                 orig(self, eu);
@@ -146,7 +157,7 @@ namespace RWMod
 
                     foreach (var player in game.Players)
                     {
-                        int level = SicknessLevel(player);
+                        int level = DelayedSicknessLevel(player);
                         if (level > 0) hasPoisoning = true;
                         sicknessSaveData.Add(level + 1); // add one to level to worsen sickness    
                     }
@@ -215,7 +226,7 @@ namespace RWMod
                 if (playerIndex < sicknessSaveData.Count)
                 {
                     mod.logSource.LogDebug($"Player {playerIndex} = {sicknessSaveData[playerIndex]}");
-                    sicknessData.Add(player.ID, sicknessSaveData[playerIndex]);
+                    sicknessData.Add(player, sicknessSaveData[playerIndex]);
                 }
             };
 
