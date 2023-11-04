@@ -14,3 +14,4 @@ x can sometimes crash when choosing entrance
 - "stalker" behavior for It
 - violencing It stuns it for a bit
 - idea: remix config tabs for each level of spookiness
+- zombie creatures
