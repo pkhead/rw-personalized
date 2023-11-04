@@ -40,9 +40,11 @@ namespace RWMod {
 
         public RWMod() {}
 
-        // get mod-specific data associated with this entity
+        // create class for mod-specific data associated with this entity
+        // if data for this entity already exists, then return the previously
+        // created class.
         // this table will be cleared at the start of every game session
-        private EntityData GetEntityData(AbstractPhysicalObject entity)
+        private EntityData MakeEntityData(AbstractPhysicalObject entity)
         {
             EntityData data;
 
@@ -132,9 +134,8 @@ namespace RWMod {
         private void GameSession_ctor(On.GameSession.orig_ctor orig, GameSession self, RainWorldGame game)
         {
             orig(self, game);
-            It.Reset();
-            FoodSickness.Reset();
             Cleanup();
+            It.Reset();
         }
     }
 }

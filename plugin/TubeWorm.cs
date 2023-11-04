@@ -15,7 +15,7 @@ namespace RWMod
             Random.InitState(creature.ID.RandomSeed);
 
             // determine if tube worm is shiny
-            GetEntityData(self.abstractCreature).isShiny = Random.value < ShinyChance;
+            MakeEntityData(self.abstractCreature).isShiny = Random.value < ShinyChance;
 
             Random.state = oldState;       
         }

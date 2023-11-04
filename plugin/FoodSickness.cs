@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
+using System.Text.RegularExpressions;
 
 namespace RWMod
 {
     public class FoodSickness
     {
+        private static RWMod mod;
         private readonly static Dictionary<EntityID, int> sicknessData = new();
 
-        private static RWMod mod;
+        // used for game serialization
+        private readonly static List<int> sicknessSaveData = new();
 
         public static void Init(RWMod mod)
         {
@@ -74,35 +77,19 @@ namespace RWMod
             };
         }
 
-        public static void Reset()
-        {
-
-        }
-
         public static void Cleanup()
         {
+            mod.logSource.LogDebug("cleanup");
             sicknessData.Clear();
         }
-
-        public static void NextCycle()
-        {
-            foreach (var key in sicknessData.Keys)
-            {
-                if (sicknessData.ContainsKey(key))
-                {
-                    sicknessData[key]++;
-                }
-            }
-        }
-
+        
         public static void Infect(AbstractCreature absCreature)
         {
             // if creature was not already sick
-            if (!sicknessData.TryGetValue(absCreature.ID, out _))
+            if (SicknessLevel(absCreature) == 0)
             {
-                // TODO: set sickness level to 1
-                // then in next cycle, this sickness level increases
-                sicknessData.Add(absCreature.ID, 2);
+                Debug.Log("infect creature");
+                sicknessData.Add(absCreature.ID, 1);
             }
         }
 
@@ -118,12 +105,16 @@ namespace RWMod
 
         public static void ApplyHooks()
         {
+            // player moves slower when they have food poisoning
             On.Player.ctor += (On.Player.orig_ctor orig, Player self, AbstractCreature absCreature, World world) =>
             {
+                mod.logSource.LogDebug("Player ctor");
+
                 orig(self, absCreature, world);
 
                 if (SicknessLevel(absCreature) > 1)
                 {
+                    mod.logSource.LogDebug("player is sick");
                     self.slugcatStats.runspeedFac *= 0.8f;
                 }
             };
@@ -142,30 +133,96 @@ namespace RWMod
                 self.slugcatStats.malnourished = oldMalnourished;
             };
 
-            On.RainWorldGame.Win += (On.RainWorldGame.orig_Win orig, RainWorldGame self, bool malnourished) =>
+            // create save data
+            On.SaveState.SessionEnded += (
+                On.SaveState.orig_SessionEnded orig, SaveState self, RainWorldGame game,
+                bool survived, bool newMalnourished
+            ) =>
             {
-                NextCycle();
-                orig(self, malnourished);
+                if (survived)
+                {
+                    sicknessSaveData.Clear();
+                    bool hasPoisoning = false;
+
+                    foreach (var player in game.Players)
+                    {
+                        int level = SicknessLevel(player);
+                        if (level > 0) hasPoisoning = true;
+                        sicknessSaveData.Add(level + 1); // add one to level to worsen sickness    
+                    }
+
+                    // if no one has food poisoning, do not save
+                    if (!hasPoisoning)
+                        sicknessSaveData.Clear();
+                    else
+                        mod.logSource.LogDebug("save player poisoning");
+                }
+
+                orig(self, game, survived, newMalnourished);
+            };
+
+            // writing sickness save data to game save
+            On.SaveState.SaveToString += (On.SaveState.orig_SaveToString orig, SaveState self) =>
+            {
+                mod.logSource.LogDebug("SaveToString called");
+
+                string text = orig(self);
+
+                if (sicknessSaveData.Count > 0)
+                {
+                    mod.logSource.LogDebug("Save food sickness");
+
+                    text += "FOODSICKNESS<svB>";
+                    text += string.Join(":", sicknessSaveData);
+                    text += "<svA>";
+                }
+                return text;
+            };
+
+            // load sickness data from save string
+            On.SaveState.LoadGame += (On.SaveState.orig_LoadGame orig, SaveState self, string saveStr, RainWorldGame game) =>
+            {
+                mod.logSource.LogDebug("LoadGame called");
+                sicknessSaveData.Clear();
+
+                orig(self, saveStr, game);
+
+                // load sickness save data
+                foreach (var str in self.unrecognizedSaveStrings)
+                {
+                    string[] subdiv = Regex.Split(str, "<svB>");
+
+                    if (subdiv[0] == "FOODSICKNESS")
+                    {
+                        mod.logSource.LogDebug("found FOODSICKNESS");
+                        
+                        string[] data = subdiv[1].Split(':');
+                        for (int i = 0; i < data.Length; i++)
+                        {
+                            sicknessSaveData.Add(int.Parse(data[i]));
+                        }
+                    }
+                }
+            };
+
+            // register player sickness from save data
+            On.GameSession.AddPlayer += (On.GameSession.orig_AddPlayer orig, GameSession self, AbstractCreature player) =>
+            {
+                int playerIndex = self.Players.Count;
+                orig(self, player);
+
+                // load sickness data
+                if (playerIndex < sicknessSaveData.Count)
+                {
+                    mod.logSource.LogDebug($"Player {playerIndex} = {sicknessSaveData[playerIndex]}");
+                    sicknessData.Add(player.ID, sicknessSaveData[playerIndex]);
+                }
             };
 
             // TODO: slugpup food poisoning...
             //On.CreatureState.LoadFromString += CreatureState_LoadFromString;
             //On.CreatureState.ToString += CreatureState_ToString;
         }
-
-        /*
-        private static string SaveState_SaveToString(On.SaveState.orig_SaveToString orig, SaveState self)
-        {
-            string baseString = orig(self);
-
-            if (SicknessLevel(ac) > 1)
-            {
-                mod.logSource.LogInfo(baseString);
-                baseString += $""
-            }
-            return baseString;
-        }
-        */
 
         #endregion Hooks
     }

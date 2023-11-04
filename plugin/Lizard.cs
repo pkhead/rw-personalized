@@ -12,7 +12,7 @@ namespace RWMod
 
             Random.State oldState = Random.state;
             Random.InitState(creature.ID.RandomSeed);
-            var entityData = GetEntityData(self.abstractCreature);
+            var entityData = MakeEntityData(self.abstractCreature);
 
             // determine if lizard is shiny
             entityData.isShiny = Random.value < ShinyChance;

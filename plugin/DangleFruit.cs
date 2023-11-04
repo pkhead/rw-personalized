@@ -34,7 +34,7 @@ namespace RWMod
             Random.InitState(randomSeed);
             
             // make shiny or rotten
-            var entityData = GetEntityData(self.abstractPhysicalObject);
+            var entityData = MakeEntityData(self.abstractPhysicalObject);
 
             if (Random.value < RottenChance)
             {
@@ -106,9 +106,13 @@ namespace RWMod
 
             // if player ate rotten dangle fruit
             // only give player 1/4th of a food pip
-            if ((eatenobject is DangleFruit) && GetEntityData((eatenobject as DangleFruit).abstractPhysicalObject).isRotten)
-                return 1;
-
+            if (eatenobject is DangleFruit)
+            {
+                DangleFruit fruit = eatenobject as DangleFruit;
+                if (TryGetEntityData(fruit.abstractPhysicalObject, out var data) && data.isRotten)
+                    return 1;
+            }
+            
             return nourishment;
         }
     }
