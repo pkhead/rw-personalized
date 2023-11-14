@@ -13,6 +13,19 @@ namespace RWMod
         private readonly static Dictionary<AbstractPhysicalObject, int> sicknessData = new();
         private readonly static Dictionary<AbstractPhysicalObject, int> delayedSicknessData = new();
 
+        private class PlayerData
+        {
+            // if the player is force-vomiting
+            public bool isVomiting;
+
+            public PlayerData()
+            {
+                isVomiting = false;
+            }
+        };
+
+        private readonly static List<PlayerData> playerData = new();
+
         // used for game serialization
         private readonly static List<int> sicknessSaveData = new();
 
@@ -78,12 +91,100 @@ namespace RWMod
                     mod.logSource.LogError(e);
                 }
             };
+
+            // force vomiting
+            IL.Player.GrabUpdate += (il) =>
+            {
+                mod.logSource.LogDebug("Player.GrabUpdate IL injection...");
+
+                try
+                {
+                    ILCursor cursor = new(il);
+
+                    static bool isVomiting(Player self) {
+                        return GetPlayerData(self).isVomiting;
+                    };
+                    
+                    // if (flag3)
+                    /*cursor.GotoNext(
+                        x => x.MatchLdloc(1),
+                        x => x.MatchBrfalse(out _)
+                    );*/
+                    ILLabel branch = null;
+
+                    // if (ModManager.MMF && base.mainBodyChunk.submersion >= 0.5f)
+                    cursor.GotoNext(
+                        x => x.MatchLdsfld(typeof(ModManager).GetField("MMF")),
+                        x => x.MatchBrfalse(out branch),
+                        x => x.MatchLdarg(0),
+                        x => x.MatchCall(typeof(Creature).GetMethod("get_mainBodyChunk")),
+                        x => x.MatchCallvirt(typeof(BodyChunk).GetMethod("get_submersion")),
+                        x => x.MatchLdcR4(out _),
+                        x => x.MatchBltUn(out _)
+                    );
+
+                    if (branch == null)
+                        throw new Exception("GotoNext search failed");
+                    cursor.GotoLabel(branch);
+
+                    ILLabel label = cursor.DefineLabel();
+
+                    /*
+                    if (GetPlayerData(self).isVomiting)
+                        flag3 = true;
+                    */
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.EmitDelegate(isVomiting);
+                    cursor.Emit(OpCodes.Brfalse, label);
+                    cursor.Emit(OpCodes.Ldc_I4_1);
+                    cursor.Emit(OpCodes.Stloc_1);
+                    cursor.MarkLabel(label);
+
+                    // else if (!ModManager.MMF || this.input[0].y == 0)
+                    ILLabel vomitBranch = null;
+
+                    cursor.GotoNext(
+                        x => x.MatchLdsfld(typeof(ModManager).GetField("MMF")),
+                        x => x.MatchBrfalse(out vomitBranch),
+                        x => x.MatchLdarg(0),
+                        x => x.MatchCall(out _), // assume Player/InputPackage[] Player::get_input()
+                        x => x.MatchLdcI4(0),
+                        x => x.MatchLdelema(out _), // assume Player/InputPackage
+                        x => x.MatchLdfld(out _), // assume Player/InputPackage::y
+                        x => x.MatchBrtrue(out _)
+                    );
+
+                    if (vomitBranch == null)
+                        throw new Exception("GotoNext search failed");
+                    
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.EmitDelegate(isVomiting);
+                    cursor.Emit(OpCodes.Brtrue, vomitBranch);
+
+                    cursor.GotoLabel(vomitBranch);
+                    cursor.EmitDelegate(() => Debug.Log("pls vomit"));
+
+                    mod.logSource.LogDebug("IL injection success!");
+                    mod.logSource.LogDebug(il.ToString());
+                }
+                catch (Exception e)
+                {
+                    mod.logSource.LogError(e);
+                }
+            };
         }
 
         public static void Cleanup()
         {
             sicknessData.Clear();
             delayedSicknessData.Clear();
+            playerData.Clear();
+        }
+
+        private static PlayerData GetPlayerData(Player player)
+        {
+            int index = player.abstractCreature.world.game.Players.IndexOf(player.abstractCreature);
+            return playerData[index];
         }
         
         public static void Infect(AbstractPhysicalObject thing)
@@ -92,10 +193,20 @@ namespace RWMod
             if (DelayedSicknessLevel(thing) == 0)
             {
                 Debug.Log("infect creature");
-                delayedSicknessData.Add(thing, 1);
+
+                // one cycle of food poisoning = 2 levels
+                delayedSicknessData.Add(thing, 2);
+            }
+            else
+            {
+                // if creature decides to eat 2 rotten fruit,
+                // then they will be sick for an extra cycle
+                // 2 / 2 = 1
+                delayedSicknessData[thing] += 1;
             }
         }
 
+        // the poisoned level a creature has on this cycle
         public static int SicknessLevel(AbstractPhysicalObject thing)
         {
             if (sicknessData.TryGetValue(thing, out var value))
@@ -104,6 +215,7 @@ namespace RWMod
             return 0;
         }
 
+        // the poisoned level a creature will have on the next cycle
         public static int DelayedSicknessLevel(AbstractPhysicalObject thing)
         {
             if (delayedSicknessData.TryGetValue(thing, out var value))
@@ -119,13 +231,11 @@ namespace RWMod
             // player moves slower when they have food poisoning
             On.Player.ctor += (On.Player.orig_ctor orig, Player self, AbstractCreature absCreature, World world) =>
             {
-                mod.logSource.LogDebug("Player ctor");
-
                 orig(self, absCreature, world);
 
                 if (SicknessLevel(absCreature) > 0)
                 {
-                    mod.logSource.LogDebug("player is sick");
+                    Debug.Log("player is sick");
                     self.slugcatStats.runspeedFac *= 0.8f;
                 }
             };
@@ -144,6 +254,12 @@ namespace RWMod
                 self.slugcatStats.malnourished = oldMalnourished;
             };
 
+            On.Player.Regurgitate += (On.Player.orig_Regurgitate orig, Player self) =>
+            {
+                orig(self);
+                GetPlayerData(self).isVomiting = false;
+            };
+
             // create save data
             On.SaveState.SessionEnded += (
                 On.SaveState.orig_SessionEnded orig, SaveState self, RainWorldGame game,
@@ -159,7 +275,8 @@ namespace RWMod
                     {
                         int level = DelayedSicknessLevel(player);
                         if (level > 0) hasPoisoning = true;
-                        sicknessSaveData.Add(level + 1); // add one to level to worsen sickness    
+                        mod.logSource.LogDebug($"store sickness level of {level}");
+                        sicknessSaveData.Add(level); // add one to level to worsen sickness    
                     }
 
                     // if no one has food poisoning, do not save
@@ -175,8 +292,6 @@ namespace RWMod
             // writing sickness save data to game save
             On.SaveState.SaveToString += (On.SaveState.orig_SaveToString orig, SaveState self) =>
             {
-                mod.logSource.LogDebug("SaveToString called");
-
                 string text = orig(self);
 
                 if (sicknessSaveData.Count > 0)
@@ -193,14 +308,15 @@ namespace RWMod
             // load sickness data from save string
             On.SaveState.LoadGame += (On.SaveState.orig_LoadGame orig, SaveState self, string saveStr, RainWorldGame game) =>
             {
-                mod.logSource.LogDebug("LoadGame called");
                 sicknessSaveData.Clear();
 
                 orig(self, saveStr, game);
 
                 // load sickness save data
-                foreach (var str in self.unrecognizedSaveStrings)
+                for (int i = self.unrecognizedSaveStrings.Count - 1; i >= 0; i--)
                 {
+                    string str = self.unrecognizedSaveStrings[i];
+
                     string[] subdiv = Regex.Split(str, "<svB>");
 
                     if (subdiv[0] == "FOODSICKNESS")
@@ -208,10 +324,12 @@ namespace RWMod
                         mod.logSource.LogDebug("found FOODSICKNESS");
                         
                         string[] data = subdiv[1].Split(':');
-                        for (int i = 0; i < data.Length; i++)
+                        for (int j = 0; j < data.Length; j++)
                         {
-                            sicknessSaveData.Add(int.Parse(data[i]));
+                            sicknessSaveData.Add(int.Parse(data[j]));
                         }
+
+                        self.unrecognizedSaveStrings.RemoveAt(i);
                     }
                 }
             };
@@ -225,8 +343,32 @@ namespace RWMod
                 // load sickness data
                 if (playerIndex < sicknessSaveData.Count)
                 {
-                    mod.logSource.LogDebug($"Player {playerIndex} = {sicknessSaveData[playerIndex]}");
-                    sicknessData.Add(player, sicknessSaveData[playerIndex]);
+                    int sicknessLevel = sicknessSaveData[playerIndex];
+                    sicknessData.Add(player, sicknessLevel);
+
+                    mod.logSource.LogDebug($"player {playerIndex} sickness is {sicknessLevel}");
+
+                    // lose one cycle of food poisoning
+                    // one cycle of food poisoning = 2 levels
+                    if (sicknessLevel > 0)
+                        delayedSicknessData.Add(player, sicknessLevel - 2);
+                }
+
+                playerData.Add(new PlayerData());
+            };
+
+            // press 2 while in dev tools to begin force vomiting
+            On.RainWorldGame.Update += (On.RainWorldGame.orig_Update orig, RainWorldGame self) =>
+            {
+                orig(self);
+
+                if (self.devToolsActive)
+                {
+                    if (Input.GetKeyDown(KeyCode.Alpha2))
+                    {
+                        Debug.Log("force regurgitate");
+                        playerData[0].isVomiting = true;
+                    }
                 }
             };
 
