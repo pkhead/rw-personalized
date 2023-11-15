@@ -99,108 +99,46 @@ namespace RWMod
             };
 
             // logic for force vomiting
-            IL.Player.GrabUpdate += (il) =>
+            IL.Player.Update += (il) =>
             {
-                mod.logSource.LogDebug("Player.GrabUpdate IL injection...");
+                mod.logSource.LogDebug("Player.Update IL injection...");
 
                 try
                 {
                     ILCursor cursor = new(il);
+                    ILLabel label = null;
                     
-                    // if (flag3)
-                    /*cursor.GotoNext(
-                        x => x.MatchLdloc(1),
-                        x => x.MatchBrfalse(out _)
-                    );*/
-                    /*
-                    ILLabel branch = null;
-
-                    // if (ModManager.MMF && base.mainBodyChunk.submersion >= 0.5f)
+                    // find call to Movement Update
                     cursor.GotoNext(
-                        x => x.MatchLdsfld(typeof(ModManager).GetField("MMF")),
-                        x => x.MatchBrfalse(out branch),
                         x => x.MatchLdarg(0),
-                        x => x.MatchCall(typeof(Creature).GetMethod("get_mainBodyChunk")),
-                        x => x.MatchCallvirt(typeof(BodyChunk).GetMethod("get_submersion")),
-                        x => x.MatchLdcR4(out _),
-                        x => x.MatchBltUn(out _)
+                        x => x.MatchLdarg(1),
+                        x => x.MatchCall<Player>("MovementUpdate")
                     );
 
-                    if (branch == null)
+                    // go to label that escape MovementUpdate
+                    cursor.GotoPrev(
+                        x => x.MatchBrtrue(out label)
+                    );
+                    if (label == null)
                         throw new Exception("GotoNext search failed");
-                    cursor.GotoLabel(branch);
-                    */
 
-                    ILLabel label = cursor.DefineLabel();
-                    
-                    /*
-                    desired code:
-
-                    if (GetPlayerData(self).isVomiting)
-                        flag3 = true;
-                    
-                    if (flag3)
-                    {
-                        if (GetPlayerData(this).isVomiting)
-                            FoodSickness.ForceVomit(this);
-                        else if (this.craftingObject)
-                        ...
-                    }
-                    */
-
-                    // match `if (flag3)`
-                    cursor.GotoNext(
-                        x => x.MatchLdloc(1),
-                        x => x.MatchBrfalse(out _)
-                    );
+                    cursor.GotoLabel(label);
                     cursor.MoveAfterLabels();
 
-                    /*
-                    if (GetPlayerData(self).isVomiting)
-                        flag3 = true;
-                    */
-                    cursor.Emit(OpCodes.Ldarg_0);
-                    cursor.EmitDelegate(isVomiting);
-                    cursor.Emit(OpCodes.Brfalse, label);
-                    cursor.Emit(OpCodes.Ldc_I4_1);
-                    cursor.Emit(OpCodes.Stloc_1);
-                    cursor.MarkLabel(label);
-
-                    // move after the `if (flag3) {` line
-                    cursor.Index += 2;
-
-                    /*
-                    insert 
-                    if (GetPlayerData(this).isVomiting)
-                        FoodSickness.ForceVomit(this);
-                    else if ...
-                    */
+                    // if (isVomiting(this)) {
                     ILLabel label2 = cursor.DefineLabel();
-                    ILLabel exitLabel = cursor.DefineLabel();
-
                     cursor.Emit(OpCodes.Ldarg_0);
                     cursor.EmitDelegate(isVomiting);
                     cursor.Emit(OpCodes.Brfalse, label2);
 
+                    //     ForceVomit(this);
                     cursor.Emit(OpCodes.Ldarg_0);
                     cursor.EmitDelegate(ForceVomit);
-                    cursor.Emit(OpCodes.Br, exitLabel);
-
+                    
+                    // }
                     cursor.MarkLabel(label2);
 
-                    // find exit label
-                    ILLabel exitLabelSrc = null;
-                    cursor.GotoNext(
-                        x => x.MatchBr(out exitLabelSrc)
-                    );
-                    if (exitLabelSrc == null)
-                        throw new Exception("GotoNext match failed");
-
-                    cursor.GotoLabel(exitLabelSrc);
-                    cursor.MarkLabel(exitLabel);
-
                     mod.logSource.LogDebug("IL injection success!");
-                    mod.logSource.LogDebug(il.ToString());
                 }
                 catch (Exception e)
                 {
@@ -255,7 +193,6 @@ namespace RWMod
                     cursor.Emit(OpCodes.Brtrue, branch);
 
                     mod.logSource.LogDebug("IL injection success!");
-                    mod.logSource.LogDebug(il.ToString());
                 }
                 catch (Exception e)
                 {
@@ -269,6 +206,9 @@ namespace RWMod
         // is executed
         private static void ForceVomit(Player self)
         {
+            self.Stun(10);
+            self.aerobicLevel = 1.0f;
+
             if (self.swallowAndRegurgitateCounter++ > 110)
             {
                 // if there is no object in player's stomach, summon some debris
@@ -373,7 +313,12 @@ namespace RWMod
             On.Player.Regurgitate += (On.Player.orig_Regurgitate orig, Player self) =>
             {
                 orig(self);
-                GetPlayerData(self).isVomiting = false;
+
+                var data = GetPlayerData(self);
+                if (data.isVomiting)
+                {
+                    data.isVomiting = false;
+                }
             };
 
             // create save data

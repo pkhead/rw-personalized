@@ -1,8 +1,11 @@
-x = done
+x - done
+= - in progress
 
 - play random music cues for no reason
 x shiny bluefruit (sort of like emerald's tweaks and features)
-- poisonous green bluefruit
+= poisonous green bluefruit
+    - make vomiting happen randomly while poisoned
+    - unintrusive vomit cue a few seconds before player actually vomits
 - need more random features
 - make game freezing on capture optional
 - prevent it from spawning in the following rooms:
