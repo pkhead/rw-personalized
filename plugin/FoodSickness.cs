@@ -33,6 +33,12 @@ namespace RWMod
         {
             FoodSickness.mod = mod;
 
+            // IL delegate to detect if
+            // player is vomiting
+            static bool isVomiting(Player self) {
+                return GetPlayerData(self).isVomiting;
+            };
+
             // color player as if they were malnourished
             // if player has food poisoning
             IL.PlayerGraphics.ApplyPalette += (il) =>
@@ -92,7 +98,7 @@ namespace RWMod
                 }
             };
 
-            // force vomiting
+            // logic for force vomiting
             IL.Player.GrabUpdate += (il) =>
             {
                 mod.logSource.LogDebug("Player.GrabUpdate IL injection...");
@@ -100,16 +106,13 @@ namespace RWMod
                 try
                 {
                     ILCursor cursor = new(il);
-
-                    static bool isVomiting(Player self) {
-                        return GetPlayerData(self).isVomiting;
-                    };
                     
                     // if (flag3)
                     /*cursor.GotoNext(
                         x => x.MatchLdloc(1),
                         x => x.MatchBrfalse(out _)
                     );*/
+                    /*
                     ILLabel branch = null;
 
                     // if (ModManager.MMF && base.mainBodyChunk.submersion >= 0.5f)
@@ -126,8 +129,31 @@ namespace RWMod
                     if (branch == null)
                         throw new Exception("GotoNext search failed");
                     cursor.GotoLabel(branch);
+                    */
 
                     ILLabel label = cursor.DefineLabel();
+                    
+                    /*
+                    desired code:
+
+                    if (GetPlayerData(self).isVomiting)
+                        flag3 = true;
+                    
+                    if (flag3)
+                    {
+                        if (GetPlayerData(this).isVomiting)
+                            FoodSickness.ForceVomit(this);
+                        else if (this.craftingObject)
+                        ...
+                    }
+                    */
+
+                    // match `if (flag3)`
+                    cursor.GotoNext(
+                        x => x.MatchLdloc(1),
+                        x => x.MatchBrfalse(out _)
+                    );
+                    cursor.MoveAfterLabels();
 
                     /*
                     if (GetPlayerData(self).isVomiting)
@@ -140,29 +166,38 @@ namespace RWMod
                     cursor.Emit(OpCodes.Stloc_1);
                     cursor.MarkLabel(label);
 
-                    // else if (!ModManager.MMF || this.input[0].y == 0)
-                    ILLabel vomitBranch = null;
+                    // move after the `if (flag3) {` line
+                    cursor.Index += 2;
 
-                    cursor.GotoNext(
-                        x => x.MatchLdsfld(typeof(ModManager).GetField("MMF")),
-                        x => x.MatchBrfalse(out vomitBranch),
-                        x => x.MatchLdarg(0),
-                        x => x.MatchCall(out _), // assume Player/InputPackage[] Player::get_input()
-                        x => x.MatchLdcI4(0),
-                        x => x.MatchLdelema(out _), // assume Player/InputPackage
-                        x => x.MatchLdfld(out _), // assume Player/InputPackage::y
-                        x => x.MatchBrtrue(out _)
-                    );
+                    /*
+                    insert 
+                    if (GetPlayerData(this).isVomiting)
+                        FoodSickness.ForceVomit(this);
+                    else if ...
+                    */
+                    ILLabel label2 = cursor.DefineLabel();
+                    ILLabel exitLabel = cursor.DefineLabel();
 
-                    if (vomitBranch == null)
-                        throw new Exception("GotoNext search failed");
-                    
                     cursor.Emit(OpCodes.Ldarg_0);
                     cursor.EmitDelegate(isVomiting);
-                    cursor.Emit(OpCodes.Brtrue, vomitBranch);
+                    cursor.Emit(OpCodes.Brfalse, label2);
 
-                    cursor.GotoLabel(vomitBranch);
-                    cursor.EmitDelegate(() => Debug.Log("pls vomit"));
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.EmitDelegate(ForceVomit);
+                    cursor.Emit(OpCodes.Br, exitLabel);
+
+                    cursor.MarkLabel(label2);
+
+                    // find exit label
+                    ILLabel exitLabelSrc = null;
+                    cursor.GotoNext(
+                        x => x.MatchBr(out exitLabelSrc)
+                    );
+                    if (exitLabelSrc == null)
+                        throw new Exception("GotoNext match failed");
+
+                    cursor.GotoLabel(exitLabelSrc);
+                    cursor.MarkLabel(exitLabel);
 
                     mod.logSource.LogDebug("IL injection success!");
                     mod.logSource.LogDebug(il.ToString());
@@ -172,6 +207,87 @@ namespace RWMod
                     mod.logSource.LogError(e);
                 }
             };
+
+            // make player look like they're regurgitating
+            // if they are force-vomiting
+            IL.PlayerGraphics.Update += (il) =>
+            {
+                mod.logSource.LogDebug("PlayerGraphics.Update IL injection...");
+
+                try
+                {
+                    ILCursor cursor = new(il);
+                    ILLabel branch = null;
+
+                    /*
+                    change line
+
+                        else if ((this.player.objectInStomach != null || (ModManager.MSC &&
+                        (this.player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Gourmand ||
+                        this.player.SlugCatClass == MoreSlugcatsEnums.SlugcatStatsName.Spear))) &&
+                        this.player.swallowAndRegurgitateCounter > 0)
+                    
+                    which executes branch if player is regurgitating and either has an object in their stomach,
+                    or is Gourmand or Spearmaster, to also run the branch if player is force-vomiting
+
+                        else if ((isVomiting(this) || this.player.objectInStomach != null ||
+                        (ModManager.MSC && (this.player.SlugCatClass ==
+                        MoreSlugcatsEnums.SlugcatStatsName.Gourmand || this.player.SlugCatClass ==
+                        MoreSlugcatsEnums.SlugcatStatsName.Spear))) &&
+                        this.player.swallowAndRegurgitateCounter > 0)
+                    
+                    */
+
+                    cursor.GotoNext(
+                        x => x.MatchLdarg(0),
+                        x => x.MatchLdfld<PlayerGraphics>("player"),
+                        x => x.MatchLdfld<Player>("objectInStomach"),
+                        x => x.MatchBrtrue(out branch)
+                    );
+                    cursor.MoveAfterLabels();
+                    
+                    if (branch == null)
+                        throw new Exception("GotoNext search failed");
+
+                    cursor.Emit(OpCodes.Ldarg_0);
+                    cursor.Emit<PlayerGraphics>(OpCodes.Ldfld, "player");
+                    cursor.EmitDelegate(isVomiting);
+                    cursor.Emit(OpCodes.Brtrue, branch);
+
+                    mod.logSource.LogDebug("IL injection success!");
+                    mod.logSource.LogDebug(il.ToString());
+                }
+                catch (Exception e)
+                {
+                    mod.logSource.LogError(e);
+                }
+            };
+        }
+
+        // this is called in Player.GrabUpdate
+        // where the code to regurgitate when pickup is held
+        // is executed
+        private static void ForceVomit(Player self)
+        {
+            if (self.swallowAndRegurgitateCounter++ > 110)
+            {
+                // if there is no object in player's stomach, summon some debris
+                self.objectInStomach ??= new AbstractPhysicalObject(
+                    world:          self.abstractCreature.world,
+                    type:           AbstractPhysicalObject.AbstractObjectType.Rock,
+                    realizedObject: null,
+                    pos:            self.abstractCreature.pos,
+                    ID:             self.abstractCreature.world.game.GetNewID()
+                );
+
+                self.Regurgitate();
+
+                if (self.spearOnBack != null)
+                    self.spearOnBack.interactionLocked = true;
+
+                if ((ModManager.MSC || ModManager.CoopAvailable) && self.slugOnBack != null)
+                    self.slugOnBack.interactionLocked = true;
+            }
         }
 
         public static void Cleanup()
