@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -71,7 +72,7 @@ namespace RWMod
                     ghosts.Clear();
 
                     // start spawn timer if this room isn't a shelter/gate
-                    if (!newRoom.abstractRoom.shelter && !newRoom.abstractRoom.gate)
+                    if (ItCanSpawn(newRoom))
                     {
                         float diceRoll = Random.value;
                         
@@ -88,13 +89,38 @@ namespace RWMod
             }
         }
 
+        private static readonly string[] prohibitedRooms = new string[] {
+            "SS_AI",    // Five Pebbles' room
+            "SL_AI",    // LTTM's room
+            "DM_AI",    // LTTM's room in Spearmaster
+            "LC_FINAL", // Artificer boss fight room
+            "SB_L01",   // Void Sea room
+            "MS_CORE",  // LTTM's core in Rivulet
+            "RM_CORE",  // Five Pebbles' core in Rivulet
+        };
+
+        private static bool ItCanSpawn(Room room)
+        {
+            if (!room.game.IsStorySession) return false;
+
+            AbstractRoom absRoom = room.abstractRoom;
+
+            // make it unable to spawn in rooms that the player is
+            // forced to stay in for a prolonged period of time
+            // (i.e., shelters, gates, iterator rooms, e.t.c.)
+            if (absRoom.shelter || absRoom.gate) return false;
+            if (prohibitedRooms.Contains(absRoom.name))
+                return false;
+
+            return true;
+        }
+
         // Spawn "it" in a story session
         private static void SpawnIt(Room realRoom)
         {
+            if (!ItCanSpawn(realRoom)) return;
             AbstractRoom room = realRoom.abstractRoom;
-            if (room.shelter || room.gate) return;
-            if (!realRoom.game.IsStorySession) return;
-            
+
             var entityID = realRoom.game.GetNewID();
             
             WorldCoordinate coords;

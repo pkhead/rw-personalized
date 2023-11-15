@@ -8,10 +8,10 @@ x shiny bluefruit (sort of like emerald's tweaks and features)
     - unintrusive vomit cue a few seconds before player actually vomits
 - need more random features
 - make game freezing on capture optional
-- prevent it from spawning in the following rooms:
-    - SS_AI (Five Pebbles' room)
-    - SL_AI (Looks to the Moon's room)
-    - SB_L01 (Void Sea room)
+x prevent it from spawning in the following rooms:
+    x SS_AI (Five Pebbles' room)
+    x SL_AI (Looks to the Moon's room)
+    x SB_L01 (Void Sea room)
 x don't chase players that are in pipes
 x can sometimes crash when choosing entrance
 - "stalker" behavior for It
