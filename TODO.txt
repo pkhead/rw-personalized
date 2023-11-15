@@ -3,6 +3,8 @@ x - done
 
 - play random music cues for no reason
 x shiny bluefruit (sort of like emerald's tweaks and features)
+- remove moreslugcats requirement
+    - It will instead be solid red w/out face if moreslugcats is missing
 = poisonous green bluefruit
     - make vomiting happen randomly while poisoned
     - unintrusive vomit cue a few seconds before player actually vomits
