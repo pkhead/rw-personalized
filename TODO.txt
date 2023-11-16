@@ -1,8 +1,7 @@
-x - done
+x - done (will then be removed)
 = - in progress
 
 - play random music cues for no reason
-x shiny bluefruit (sort of like emerald's tweaks and features)
 - remove moreslugcats requirement
     - It will instead be solid red w/out face if moreslugcats is missing
 = poisonous green bluefruit
@@ -10,12 +9,8 @@ x shiny bluefruit (sort of like emerald's tweaks and features)
     - unintrusive vomit cue a few seconds before player actually vomits
 - need more random features
 - make game freezing on capture optional
-x prevent it from spawning in the following rooms:
-    x SS_AI (Five Pebbles' room)
-    x SL_AI (Looks to the Moon's room)
-    x SB_L01 (Void Sea room)
-x don't chase players that are in pipes
-x can sometimes crash when choosing entrance
+- make It spawn when you are done talking to pebbles
+  then pebbles acknowledges the existence of It
 - "stalker" behavior for It
 - violencing It stuns it for a bit
 - idea: remix config tabs for each level of spookiness

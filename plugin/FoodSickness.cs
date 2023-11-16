@@ -18,9 +18,19 @@ namespace RWMod
             // if the player is force-vomiting
             public bool isVomiting;
 
+            // ticks down until 0, where the player will regurgitate
+            // due to food poisoning
+            public int vomitTicker;
+
+            // how many vomit warnings have occured
+            // since the player last vomited?
+            public int vomitWarnings;
+
             public PlayerData()
             {
                 isVomiting = false;
+                vomitTicker = 0;
+                vomitWarnings = 0;
             }
         };
 
@@ -36,6 +46,7 @@ namespace RWMod
             // IL delegate to detect if
             // player is vomiting
             static bool isVomiting(Player self) {
+                if (self.isNPC) return false;
                 return GetPlayerData(self).isVomiting;
             };
 
@@ -201,35 +212,6 @@ namespace RWMod
             };
         }
 
-        // this is called in Player.GrabUpdate
-        // where the code to regurgitate when pickup is held
-        // is executed
-        private static void ForceVomit(Player self)
-        {
-            self.Stun(10);
-            self.aerobicLevel = 1.0f;
-
-            if (self.swallowAndRegurgitateCounter++ > 110)
-            {
-                // if there is no object in player's stomach, summon some debris
-                self.objectInStomach ??= new AbstractPhysicalObject(
-                    world:          self.abstractCreature.world,
-                    type:           AbstractPhysicalObject.AbstractObjectType.Rock,
-                    realizedObject: null,
-                    pos:            self.abstractCreature.pos,
-                    ID:             self.abstractCreature.world.game.GetNewID()
-                );
-
-                self.Regurgitate();
-
-                if (self.spearOnBack != null)
-                    self.spearOnBack.interactionLocked = true;
-
-                if ((ModManager.MSC || ModManager.CoopAvailable) && self.slugOnBack != null)
-                    self.slugOnBack.interactionLocked = true;
-            }
-        }
-
         public static void Cleanup()
         {
             sicknessData.Clear();
@@ -280,6 +262,60 @@ namespace RWMod
             return 0;
         }
 
+        // this is called in Player.GrabUpdate
+        // where the code to regurgitate when pickup is held
+        // is executed
+        private static void ForceVomit(Player self)
+        {
+            self.Stun(10);
+            self.aerobicLevel = 1.0f;
+
+            if (self.swallowAndRegurgitateCounter++ > 110)
+            {
+                // if there is no object in player's stomach, summon some debris
+                self.objectInStomach ??= new AbstractPhysicalObject(
+                    world:          self.abstractCreature.world,
+                    type:           AbstractPhysicalObject.AbstractObjectType.Rock,
+                    realizedObject: null,
+                    pos:            self.abstractCreature.pos,
+                    ID:             self.abstractCreature.world.game.GetNewID()
+                );
+
+                self.Regurgitate();
+
+                if (self.spearOnBack != null)
+                    self.spearOnBack.interactionLocked = true;
+
+                if ((ModManager.MSC || ModManager.CoopAvailable) && self.slugOnBack != null)
+                    self.slugOnBack.interactionLocked = true;
+            }
+        }
+
+        private static void ResetVomitTimer(Player player)
+        {
+            const int TICKS_PER_SECOND = 40;
+            var playerData = GetPlayerData(player);
+            
+            playerData.vomitTicker = UnityEngine.Random.Range(
+                TICKS_PER_SECOND * 30, // 30 seconds min
+                TICKS_PER_SECOND * 120 // 2 minutes max
+            );
+            playerData.vomitWarnings = 0;
+        }
+
+        private static void VomitWarning(Player player)
+        {
+            Debug.Log("vomit warning");
+
+            GetPlayerData(player).vomitWarnings++;
+
+            // emulate animation that happens when slugcat swallows
+            // something
+            player.mainBodyChunk.vel.y += 2f;
+            player.room.PlaySound(SoundID.Slugcat_Swallow_Item, player.mainBodyChunk);
+            (player.graphicsModule as PlayerGraphics).swallowing = 20;
+        }
+
         #region Hooks
 
         public static void ApplyHooks()
@@ -288,16 +324,42 @@ namespace RWMod
             On.Player.ctor += (On.Player.orig_ctor orig, Player self, AbstractCreature absCreature, World world) =>
             {
                 orig(self, absCreature, world);
+                if (self.isNPC) return;
 
                 if (SicknessLevel(absCreature) > 0)
                 {
                     Debug.Log("player is sick");
                     self.slugcatStats.runspeedFac *= 0.8f;
+
+                    ResetVomitTimer(self);
+                }
+            };
+
+            // if player gets exhausted from movement, they will vomit
+            // (if they have food sickness, of course)
+            // this is hooked in AerobicIncrease so it doesn't create
+            // a potential feedback loop of infinite vomiting
+            On.Player.AerobicIncrease += (On.Player.orig_AerobicIncrease orig, Player self, float f) =>
+            {
+                orig(self, f);
+                if (self.isNPC) return;
+
+                var playerData = GetPlayerData(self);
+                if (self.aerobicLevel >= 1f)
+                {
+                    if (SicknessLevel(self.abstractCreature) > 0)
+                        playerData.vomitTicker = 1;
                 }
             };
 
             On.Player.Update += (On.Player.orig_Update orig, Player self, bool eu) =>
             {
+                if (self.isNPC)
+                {
+                    orig(self, eu);
+                    return;
+                }
+
                 // if slugcat has food poisoning,
                 // pretend that slugcat is malnourished for the
                 // duration of the update call
@@ -307,12 +369,36 @@ namespace RWMod
 
                 orig(self, eu);
 
+                // decrease vomit timer
+                var playerData = GetPlayerData(self);
+                if (playerData.vomitTicker > 0)
+                {
+                    playerData.vomitTicker--;
+
+                    if (self.aerobicLevel > 0.4f)
+                        playerData.vomitTicker--;
+
+                    // make player vomit if timer reaches 0
+                    if (playerData.vomitTicker <= 0)
+                    {
+                        playerData.isVomiting = true;
+                        ResetVomitTimer(self);
+                    }
+
+                    // vomit warning ten seconds before actually vomiting
+                    else if (playerData.vomitWarnings == 0 && playerData.vomitTicker <= 400)
+                    {
+                        VomitWarning(self);
+                    }
+                }
+
                 self.slugcatStats.malnourished = oldMalnourished;
             };
 
             On.Player.Regurgitate += (On.Player.orig_Regurgitate orig, Player self) =>
             {
                 orig(self);
+                if (self.isNPC) return;
 
                 var data = GetPlayerData(self);
                 if (data.isVomiting)
@@ -427,8 +513,7 @@ namespace RWMod
                 {
                     if (Input.GetKeyDown(KeyCode.Alpha2))
                     {
-                        Debug.Log("force regurgitate");
-                        playerData[0].isVomiting = true;
+                        playerData[0].vomitTicker = 410;
                     }
                 }
             };
