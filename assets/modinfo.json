@@ -5,8 +5,6 @@
     "target_game_version": "v1.9",
     "authors": "pkhead",
     "description": "Personalizes your Rain World experience using \"state-of-the-art A.I.\"",
-    "requirements": ["moreslugcats"],
-    "requirements_names": ["More Slugcats Expansion"],
     "tags": ["Creatures", "Cosmetics", "Game Mechanics"],
     "checksum_override_version": false
 }

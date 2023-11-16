@@ -31,6 +31,21 @@ namespace RWMod
             On.RoomCamera.Update += RoomCamera_Update;
             On.Player.ShortCutColor += Player_ShortCutColor;
             On.Player.Update += Player_Update;
+
+            // substitute for if player doesn't have MSC enabled
+            On.Player.ctor += (On.Player.orig_ctor orig, Player self, AbstractCreature absCrit, World world) =>
+            {
+                orig(self, absCrit, world);
+
+                if (!ModManager.MSC)
+                {
+                    if (ghosts.Contains(absCrit))
+                    {
+                        self.npcStats = new Player.NPCStats(self);
+                        self.setPupStatus(true);
+                    }
+                }
+            };
         }
 
         public static void Cleanup()
@@ -131,9 +146,20 @@ namespace RWMod
             exitRoom = room.connections[exitIndex];
             coords = new WorldCoordinate(exitRoom, 0, 0, 0);
             
-            var template = StaticWorld.GetCreatureTemplate(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC);
-            var newCreature = new AbstractCreature(realRoom.world, template, null, coords, entityID);
-            newCreature.state = new MoreSlugcats.PlayerNPCState(newCreature, 0);
+            AbstractCreature newCreature;
+
+            if (ModManager.MSC)
+            {
+                var template = StaticWorld.GetCreatureTemplate(MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC);
+                newCreature = new AbstractCreature(realRoom.world, template, null, coords, entityID);
+                newCreature.state = new MoreSlugcats.PlayerNPCState(newCreature, 0);
+            }
+            else
+            {
+                var template = StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.Slugcat);
+                newCreature = new AbstractCreature(realRoom.world, template, null, coords, entityID);
+            }
+
             ghosts.Add(newCreature);
 
             newCreature.ChangeRooms(
@@ -171,7 +197,7 @@ namespace RWMod
 
         private static string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite orig, PlayerGraphics self, float eyeScale)
         {
-            if (ghosts.Contains(self.player.abstractCreature))
+            if (ModManager.MSC && ghosts.Contains(self.player.abstractCreature))
             {
                 return "FaceE";
             }
@@ -192,8 +218,16 @@ namespace RWMod
 
             if (ghosts.Contains(self.player.abstractCreature))
             {
-                Color color = new Color(0.01f, 0.01f, 0.01f);
+                Color color;
 
+                // if MSC is enabled, color creature like inv pup
+                // otherwise, since FaceE sprite doesn't exist without MSC,
+                // go for an alternative look
+                if (ModManager.MSC)
+                    color = new(0.01f, 0.01f, 0.01f);
+                else
+                    color = new(1f, 0f, 0f);
+                
                 for (int i = 0; i < sLeaser.sprites.Length; i++)
                 {
                     if (i != 9)
