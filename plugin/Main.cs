@@ -84,12 +84,13 @@ namespace RWMod {
         private void RainWorld_OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
         {
             orig(self);
-            if (isInit) return;
-            isInit = true;
 
             try
             {
                 MachineConnector.SetRegisteredOI(MOD_ID, Options.instance);
+                
+                if (isInit) return;
+                isInit = true;
 
                 // cleanup hooks
                 On.RainWorldGame.ShutDownProcess += RainWorldGame_ShutDownProcess;
