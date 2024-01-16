@@ -10,7 +10,6 @@ x - done (will then be removed)
 - prevent It from spawning in the pipe the player came out of
 - need more random features
 - make game freezing on capture optional
-- violencing It stuns it for a bit
 - slugpups react accordingly when eating rotten danglefruit
 
     Features/Concepts
@@ -20,15 +19,17 @@ x - done (will then be removed)
 - "stalker" behavior for It
     - "It" has a chance of spawning at a random place within the room, and will stand there until being seen,
       then shortly afterwards pop out of existence
-- zombie creatures
+- zombie creatures (maybe larry is an example of a "zombified" slugpup)
 - scp096-ass creature
     - faint picture of its face engulfs whole screen before it actually spawns?
       (my friend suggested this, but i'm not completely on board with this)
 - Hell
 - tameable spiders
 - sometimes the cycle will start at night, where scary stuff will happen
+- Sometimes, there will be no creatures or food that spawn in a cycle, and some
+  scary bg noise starts playing after a while and ramps up.
+  then when you enter some random room, the music will stop and there will be
+  a super scary sc096-ass creature waiting for you (no jumpscare)
+  - creature has camouflage? but player will be able to notice when it moves
 - sometimes an entity will try to communicate with the player through unorthodox methods
 - creature that acts friendly or aggressive by random chance
-- use a same melody from hydrphone into 7/8
-    - play a cool chord before the end of a phrase, then 1/2 into the bar stop all channels except the lead, drums lead on fourth beat of same bar
-- annoying orange rain world mod
