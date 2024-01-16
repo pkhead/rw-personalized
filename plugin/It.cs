@@ -24,13 +24,65 @@ namespace RWMod
 
         public static void ApplyHooks()
         {
-            On.PlayerGraphics.DefaultFaceSprite += PlayerGraphics_DefaultFaceSprite;
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
+            On.PlayerGraphics.Update += PlayerGraphics_Update;
             On.Player.NewRoom += Player_NewRoom;
             On.Room.Update += Room_Update;
             On.RoomCamera.Update += RoomCamera_Update;
             On.Player.ShortCutColor += Player_ShortCutColor;
             On.Player.Update += Player_Update;
+
+            // always able to hit IT
+            On.Weapon.HitThisObject += (On.Weapon.orig_HitThisObject orig, Weapon self, PhysicalObject obj) =>
+            {
+                if (obj is Player player && ghosts.Contains(player.abstractCreature))
+                    return true;
+
+                return orig(self, obj);
+            };
+
+            // create singularity bomb explosion
+            // when IT dies
+            On.Player.Die += (On.Player.orig_Die orig, Player self) =>
+            {
+                Room room = self.room ?? self.abstractCreature.world.GetAbstractRoom(self.abstractCreature.pos).realizedRoom;
+                bool wasAlive = !self.dead;
+                orig(self);
+
+                if (wasAlive && ghosts.Contains(self.abstractCreature) && room != null)
+                {
+                    AbstractPhysicalObject abstractPhysicalObject = new(
+                        room.world,
+                        MoreSlugcats.MoreSlugcatsEnums.AbstractObjectType.SingularityBomb,
+                        null,
+                        room.GetWorldCoordinate(self.mainBodyChunk.pos),
+                        room.world.game.GetNewID()
+                    );
+                    room.abstractRoom.AddEntity(abstractPhysicalObject);
+                    abstractPhysicalObject.RealizeInRoom();
+                    (abstractPhysicalObject.realizedObject as MoreSlugcats.SingularityBomb).Explode();
+                }
+            };
+
+            // lizards fear It
+            On.LizardAI.IUseARelationshipTracker_UpdateDynamicRelationship += (
+                On.LizardAI.orig_IUseARelationshipTracker_UpdateDynamicRelationship orig,
+                LizardAI self,
+                RelationshipTracker.DynamicRelationship dRelation
+            ) =>
+            {
+                AbstractCreature representedCreature = dRelation.trackerRep.representedCreature;
+
+                if (
+                    representedCreature.creatureTemplate.type == MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC &&
+                    ghosts.Contains(representedCreature)
+                )
+                {
+                    return new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1200f);
+                }
+
+                return orig(self, dRelation);
+            };
         }
 
         public static void Cleanup()
@@ -169,16 +221,6 @@ namespace RWMod
             oldPressState = pressState;
         }
 
-        private static string PlayerGraphics_DefaultFaceSprite(On.PlayerGraphics.orig_DefaultFaceSprite orig, PlayerGraphics self, float eyeScale)
-        {
-            if (ghosts.Contains(self.player.abstractCreature))
-            {
-                return "FaceE";
-            }
-
-            return orig(self, eyeScale);
-        }
-
         private static void PlayerGraphics_DrawSprites(
             On.PlayerGraphics.orig_DrawSprites orig,
             PlayerGraphics self,
@@ -204,6 +246,20 @@ namespace RWMod
                 }
 
                 sLeaser.sprites[9].color = new Color(1f, 0f, 0f);
+                sLeaser.sprites[9].element = Futile.atlasManager.GetElementWithName("FaceE0");
+            }
+        }
+
+        private static void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
+        {
+            orig(self);
+
+            // make sure that It doesn't look at anything
+            // it makes it seem more slugcat-y, which is bad for something
+            // that's supposed to be scary
+            if (ghosts.Contains(self.player.abstractCreature))
+            {
+                self.objectLooker.LookAtNothing();
             }
         }
 
@@ -241,7 +297,9 @@ namespace RWMod
             if (ghosts.Contains(self.abstractCreature))
             {
                 darknessMultiplier = 1f;
-                self.room.PlaySound(
+                
+                if (self.Consious) self.bodyMode = Player.BodyModeIndex.Stand;
+                if (!self.dead) self.room.PlaySound(
                     SoundID.Death_Rain_LOOP,
                     self.mainBodyChunk,
                     false,
@@ -278,26 +336,37 @@ namespace RWMod
                 if (targetPos != null && targetPlayer != null)
                 {
                     Vector2 delta = (targetPos.Value - selfPos).normalized * 2f;
-                    self.bodyChunks[0].pos += delta;
-                    self.bodyChunks[1].pos = self.bodyChunks[0].pos + self.bodyChunkConnections[0].distance * Vector2.down;
-
-                    // if i touch player, freeze the application :trolle:
                     float dist = (targetPos.Value - selfPos).magnitude;
-                    if (!targetPlayer.inShortcut && dist < 30f && !self.abstractCreature.world.game.devToolsActive)
+
+                    // glide to nearest player if Consious
+                    if (self.Consious)
                     {
-                        // only if this room is being viewed
-                        if (isRoomViewed)
-                            gameCrash = true;
-                        else
-                            targetPlayer.Die();
+                        self.bodyChunks[0].pos += delta;
+                        self.bodyChunks[1].pos = self.bodyChunks[0].pos + self.bodyChunkConnections[0].distance * Vector2.down;
+                        self.bodyChunks[0].vel = Vector2.zero;
+                        self.bodyChunks[1].vel = Vector2.zero;
+
+                        // if i touch player, freeze the application :trolle:
+                        if (!targetPlayer.inShortcut && dist < 30f && !self.abstractCreature.world.game.devToolsActive)
+                        {
+                            // only if this room is being viewed
+                            if (isRoomViewed)
+                                gameCrash = true;
+                            else
+                                targetPlayer.Die();
+                        }
                     }
 
                     // make screen darker the closer it is to the player
-                    if (isRoomViewed)
+                    if (isRoomViewed && !self.dead)
                     {
                         darknessMultiplier = Mathf.Clamp01((dist - 90) / (600 - 90));
                     }
                 }
+
+                // if not Consious, will be affected by physics
+                if (!self.Consious)
+                    orig(self, eu);
             }
             else
             {
