@@ -3,6 +3,7 @@ x - done (will then be removed)
 
     Bugs and improvements
 
+- make creatures run away from it's sound source
 - dark yeeks
 - play random music cues for no reason
 - remove moreslugcats requirement
@@ -14,6 +15,7 @@ x - done (will then be removed)
 
     Features/Concepts
 
+- passage music is so fitting for the "What" meme where they play earthbound sanctuary guardians
 - make It spawn when you are done talking to pebbles
   then pebbles acknowledges the existence of It
 - "stalker" behavior for It
