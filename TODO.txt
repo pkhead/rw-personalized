@@ -3,6 +3,7 @@ x - done (will then be removed)
 
     Bugs and improvements
 
+- spearing It creates a duplicate singularity bomb (why???) 
 - make creatures run away from it's sound source
 - dark yeeks
 - play random music cues for no reason

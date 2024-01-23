@@ -61,6 +61,7 @@ namespace RWMod
                     room.abstractRoom.AddEntity(abstractPhysicalObject);
                     abstractPhysicalObject.RealizeInRoom();
                     (abstractPhysicalObject.realizedObject as MoreSlugcats.SingularityBomb).Explode();
+                    self.Destroy();
                 }
             };
 
