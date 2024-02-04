@@ -51,16 +51,21 @@ namespace RWMod
 
                 if (wasAlive && ghosts.Contains(self.abstractCreature) && room != null)
                 {
-                    AbstractPhysicalObject abstractPhysicalObject = new(
+                    ghosts.Remove(self.abstractCreature);
+
+                    AbstractPhysicalObject abstractBomb = new(
                         room.world,
                         MoreSlugcats.MoreSlugcatsEnums.AbstractObjectType.SingularityBomb,
                         null,
                         room.GetWorldCoordinate(self.mainBodyChunk.pos),
                         room.world.game.GetNewID()
                     );
-                    room.abstractRoom.AddEntity(abstractPhysicalObject);
-                    abstractPhysicalObject.RealizeInRoom();
-                    (abstractPhysicalObject.realizedObject as MoreSlugcats.SingularityBomb).Explode();
+                    room.abstractRoom.AddEntity(abstractBomb);
+                    abstractBomb.RealizeInRoom();
+                    (abstractBomb.realizedObject as MoreSlugcats.SingularityBomb).Explode();
+                    abstractBomb.realizedObject.Destroy();
+                    
+                    darknessMultiplier = 1f;
                     self.Destroy();
                 }
             };
@@ -203,7 +208,7 @@ namespace RWMod
             Room activeRoom = self.game.cameras[0].room;
             if (self != activeRoom) return;
             //idk why this is broken ):
-            bool pressState = Input.GetKey(KeyCode.G);
+            bool pressState = Input.GetKey(KeyCode.Keypad5);
 
             if (self.game.IsStorySession && ModManager.MSC)
             {
