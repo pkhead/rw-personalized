@@ -2,7 +2,7 @@
   "Title": "Personalizer",
   "Description": "[url=https://github.com/pkhead/rw-personalized]GitHub[/url]\r\n\r\nThis is a mod that personalizes your Rain World experience using state-of-the-art AI.\r\n[h2]FAQ[/h2]\r\n[b]Q: Where does my personal information come from?[/b]\r\n\r\nThe personal information we use to enhance your Rain World experience comes from our benefactors.\r\n\r\n[b]Q: Who are your benefactors?[/b]\r\n\r\nOur benefactors are people who support this project and are generous enough to provide us money.\r\n\r\n[b]Q: Who specifically are your benefactors?[/b]\r\n\r\nOur benefactors are people who support this project and are generous enough to provide us money.\r\n\r\n[b]Q: What are the names of your benefactors?[/b]\r\n\r\nOur benefactors are people who support this project and are generous enough to provide us money.\r\n\r\n[b]Q: you\u0027re not answering my question[/b]\r\n\r\nServer error\r\n[h2]Features[/h2]\r\nNo, this mod doesn\u0027t actually personalize your Rain World experience using state-of-the-art A.I (...yet). I\u0027m just having too much fun writing this description. In actuality, it just does various miscellaneous things. Current features include:\r\n[list]\r\n[*] Blue Lizards, Caramel Lizards, and Grapple Worms have a chance to be \u0022shiny\u0022 (i.e., differently colored)\r\n[*] Shiny bluefruit which gives you more food pips if eaten\r\n[*] You may encounter \u0022Larry\u0022 (configurable through Spawn Chance in the Remix config)\r\n[/list]\r\nIn the future I may add more funny miscellaneous things.",
   "ID": "pkhead.personalizer",
-  "Version": "1.1.0",
+  "Version": "1.2.0",
   "TargetGameVersion": "v1.9.06",
   "Requirements": "moreslugcats",
   "RequirementNames": "More Slugcats Expansion",
