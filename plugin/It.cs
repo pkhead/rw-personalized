@@ -64,7 +64,7 @@ namespace RWMod
                     abstractBomb.RealizeInRoom();
                     (abstractBomb.realizedObject as MoreSlugcats.SingularityBomb).Explode();
                     abstractBomb.realizedObject.Destroy();
-                    
+
                     darknessMultiplier = 1f;
                     self.Destroy();
                 }
@@ -74,6 +74,26 @@ namespace RWMod
             On.LizardAI.IUseARelationshipTracker_UpdateDynamicRelationship += (
                 On.LizardAI.orig_IUseARelationshipTracker_UpdateDynamicRelationship orig,
                 LizardAI self,
+                RelationshipTracker.DynamicRelationship dRelation
+            ) =>
+            {
+                AbstractCreature representedCreature = dRelation.trackerRep.representedCreature;
+
+                if (
+                    representedCreature.creatureTemplate.type == MoreSlugcats.MoreSlugcatsEnums.CreatureTemplateType.SlugNPC &&
+                    ghosts.Contains(representedCreature)
+                )
+                {
+                    return new CreatureTemplate.Relationship(CreatureTemplate.Relationship.Type.Afraid, 1200f);
+                }
+
+                return orig(self, dRelation);
+            };
+
+            // scavengers also fear It
+            On.ScavengerAI.IUseARelationshipTracker_UpdateDynamicRelationship += (
+                On.ScavengerAI.orig_IUseARelationshipTracker_UpdateDynamicRelationship orig,
+                ScavengerAI self,
                 RelationshipTracker.DynamicRelationship dRelation
             ) =>
             {

@@ -16,6 +16,7 @@ x - done (will then be removed)
 
     Features/Concepts
 
+- The spirits will be angry when you kill Larry
 - passage music is so fitting for the "What" meme where they play earthbound sanctuary guardians
 - make It spawn when you are done talking to pebbles
   then pebbles acknowledges the existence of It
